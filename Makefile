@@ -1,10 +1,11 @@
 #!/bin/make
 CXX = g++
 AR = ar
-#CXXFLAGS = -O2 -Wall -fPIC
-#LDFLAGS = -I/usr/include/python3.6m -L/usr/lib64 -lpython3.6m
-CXXFLAGS = `/usr/bin/python3.6-config --cflags`
-LDFLAGS = `/usr/bin/python3.6-config --ldflags`
+
+PY_VER = 3.6
+
+CXXFLAGS = `python$(PY_VER)-config --cflags`
+LDFLAGS = `python$(PY_VER)-config --ldflags`
 ARFLGS = crsv
 
 PROG = Pi2D

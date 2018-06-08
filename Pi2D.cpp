@@ -1,5 +1,5 @@
 #include "Pi2D.h"
-#include <python3.6m/Python.h>
+#include <Python.h>
 
 using namespace std;
 
@@ -30,8 +30,8 @@ Pi2D::Pi2D()
 
 Pi2D::~Pi2D()
 {
-  if ( m_id == 0 )
-    Py_Finalize();
+  //if ( m_id == 0 )
+  //  Py_Finalize();
 }
 
 bool Pi2D::SetAttrib(const string arg)
