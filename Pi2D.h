@@ -27,6 +27,8 @@ public:
   bool DrawV(const float*, const int, const int[2], 
              const std::string, const int);
   bool Save(const int, const int, const int);
+  bool ImportAttrib(const std::string);
+  bool ExportAttrib(const std::string);
 
   int m_imageSz[2];
   int m_arraySz[2];

@@ -51,18 +51,28 @@ bool Pi2D::SetLUT()
 }
 
 bool Pi2D::DrawS(const CVType vt, const float* data,
-                 const std::string lutname, const int nlevels)
+                 const string lutname, const int nlevels)
 {
   return true;
 }
 
 bool Pi2D::DrawV(const float* data, const int veclen, const int* vecid,
-                 const std::string lutname, const int colid)
+                 const string lutname, const int colid)
 {
   return true;
 }
 
 bool Pi2D::Save(const int step, const int row, const int col)
+{
+  return true;
+}
+
+bool Pi2D::ImportAttrib(const string path)
+{
+  return true;
+}
+
+bool Pi2D::ExportAttrib(const string path)
 {
   return true;
 }
