@@ -7,6 +7,19 @@ size_t Pi2D::s_id = 0;
 
 Pi2D::Pi2D()
 {
+  m_imageSz[0] = 600;
+  m_imageSz[1] = 400;
+  m_arraySz[0] = -1;
+  m_arraySz[1] = -1;
+  for ( int i = 0; i < 4; i++ )
+    m_viewPoint[i] = 0.0;
+  m_outputPtn = "./outimage_%S6.png";
+  //LUT lut;
+  LUT *lut = new LUT();
+  m_lutList["default"] = *lut;
+  m_lineWidth = 1.0;
+  m_vectorMag = 1.0;
+ 
   if ( s_id == 0 ) {
     Py_Initialize();
 
@@ -45,7 +58,7 @@ bool Pi2D::SetCoord(const float* arr, const int veclen,
   return true;
 }
 
-bool Pi2D::SetLUT()
+bool Pi2D::SetLUT(const std::string name, const LUT* lut)
 {
   return true;
 }

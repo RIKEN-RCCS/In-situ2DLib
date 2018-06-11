@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include "LUT.h"
 
 enum CVType {
   ColorContour = 0,
@@ -20,8 +21,7 @@ public:
   ~Pi2D();
   bool SetAttrib(const std::string);
   bool SetCoord(const float*, const int, const int[2]);
-  bool SetLUT();
-  //bool SetLUT(const std::string, const LUT*);
+  bool SetLUT(const std::string, const LUT*);
   bool DrawS(const CVType, const float*, const std::string,
              const int);
   bool DrawV(const float*, const int, const int[2], 
@@ -35,7 +35,7 @@ public:
   float m_viewPoint[4];
   std::string m_outputPtn;
   float* m_coord;
-  //std::map<std::string, LUT> m_lutList;
+  std::map<std::string, LUT> m_lutList;
   float m_lineWidth;
   float m_vectorMag;
   size_t m_id;

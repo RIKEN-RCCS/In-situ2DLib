@@ -11,7 +11,7 @@ ARFLGS = crsv
 PROG = Pi2D
 TARGET = lib$(PROG).a
 
-OBJS = Pi2D.o
+OBJS = Pi2D.o LUT.o
 
 all : $(OBJS) $(TARGET)
 
