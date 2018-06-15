@@ -6,6 +6,7 @@ LUT::LUT()
 {
   color_s clr = {1.0, 1.0, 1.0};
   m_colorList[0.0] = clr;
+  printf("LUT: setring\n");
 }
 
 LUT::~LUT()
