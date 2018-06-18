@@ -29,9 +29,9 @@ public:
   bool SetCoord(const Real*, const int, const int[2]);
   bool SetLUT(const std::string, const LUT*);
   bool DrawS(const CVType, const Real*, const std::string,
-             const int);
+             const int, bool);
   bool DrawV(const Real*, const int, const int[2], 
-             const std::string, const int);
+             const std::string, const int, bool);
   bool Save(const int, const int, const int);
   bool ImportAttrib(const std::string);
   bool ExportAttrib(const std::string);
@@ -47,7 +47,9 @@ public:
   size_t m_id;
 
 private:
-  int m_arrSz[2];
+  //int m_arrSz[2];
+  int m_veclen;
+  int m_vecid[2];
 
 };
 

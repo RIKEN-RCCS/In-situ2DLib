@@ -1,5 +1,7 @@
 #include "Pi2D.h"
 #include <Python.h>
+//#include <pymem.h>
+#include "numpy/arrayobject.h"
 
 using namespace std;
 
@@ -21,8 +23,8 @@ Pi2D::Pi2D()
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
  
-  m_arrSz[0] = 0;
-  m_arrSz[1] = 0;
+  //m_arrSz[0] = 0;
+  //m_arrSz[1] = 0;
 
   if ( s_id == 0 ) {
     Py_Initialize();
@@ -118,6 +120,7 @@ bool Pi2D::SetAttribute(const string arg)
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
     m_vectorMag = v;
+/*
   } else if ( attr == "arrSize" ) {
     int sz[2];
     int n = sscanf(vals.c_str(), "[%i, %i]", &sz[0], &sz[1]);
@@ -125,6 +128,7 @@ bool Pi2D::SetAttribute(const string arg)
     if ( sz[0] < 0 || sz[1] < 0) return false;
     m_arrSz[0] = sz[0];
     m_arrSz[1] = sz[1];
+*/
   } else {
     //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
@@ -149,8 +153,11 @@ bool Pi2D::SetCoord(const Real* arr, const int veclen,
     return false;
   if ( vecid[1] < 0  || vecid[1] >= veclen )
     return false;
+  m_veclen = veclen;
+  m_vecid[0] = vecid[0];
+  m_vecid[1] = vecid[1];
 
-  int sz = m_arrSz[0] * m_arrSz[1] * veclen;
+  int sz = m_arraySz[0] * m_arraySz[1] * veclen;
   m_coord = (Real*)realloc(m_coord, sz * sizeof(Real));
 
   if ( ! m_coord )
@@ -183,13 +190,44 @@ bool Pi2D::SetLUT(const std::string name, const LUT* lut)
 }
 
 bool Pi2D::DrawS(const CVType vt, const Real* data,
-                 const string lutname, const int nlevels)
+                 const string lutname = "", const int nlevels = 10,
+                 bool cbShow = false)
 {
+  string pystr;
+  char pycmd[256];
+
+  //if ( m_veclen == 2 ) {
+  //}
+
+  int n = m_arraySz[0] * m_arraySz[1];
+  Real* zarr = (Real*)PyDataMem_NEW(sizeof(Real) * n);
+
+  for ( int i = 0 ; i < n ; i++ )
+    zarr[i] = data[i];
+
+  npy_intp dims[1] = {n};
+  PyObject* ret = PyArray_SimpleNewFromData(1, dims, NPY_FLOAT, zarr);
+
+  float x = m_imageSz[0] / 100.0;
+  float y = m_imageSz[1] / 100.0;
+  sprintf(pycmd, "fig%d = plt.figure(%d, figsize=(%f, %f))",
+          (int)m_id, (int)m_id, x, y);
+  PyRun_SimpleString(pycmd);
+
+  if ( vt == ColorContour ){
+    //cmd = string("plt.contourf(Z)\n");
+    //PyRun_SimpleString(cmd.c_str());
+  } else {
+  }
+
+  PyDataMem_FREE(zarr);
+
   return true;
 }
 
 bool Pi2D::DrawV(const Real* data, const int veclen, const int* vecid,
-                 const string lutname, const int colid)
+                 const string lutname, const int colid,
+                 bool cbShow = false)
 {
   return true;
 }
