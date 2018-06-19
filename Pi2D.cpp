@@ -1,7 +1,12 @@
 #include "Pi2D.h"
-#include <Python.h>
-//#include <pymem.h>
+//#include <Python.h>
 #include "numpy/arrayobject.h"
+
+#if PY_MAJOR_VERSION >= 3
+int init_numpy() {import_array();}
+#else
+void init_numpy() {import_array();}
+#endif
 
 using namespace std;
 
@@ -23,11 +28,10 @@ Pi2D::Pi2D()
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
  
-  //m_arrSz[0] = 0;
-  //m_arrSz[1] = 0;
-
   if ( s_id == 0 ) {
+    setenv("PYTHONPATH", ".", 0);
     Py_Initialize();
+    init_numpy();
 
     string cmd("#!/usr/bin/env python\n");
     cmd += "# -*- coding: utf-8 -*-\n";
@@ -35,7 +39,7 @@ Pi2D::Pi2D()
     PyRun_SimpleString(cmd.c_str());
 
     cmd = "import matplotlib\n";
-    cmd += "matplotlib.use('Agg')\n";
+//    cmd += "matplotlib.use('Agg')\n";
     cmd += "import numpy as np\n";
     cmd += "import matplotlib.cm as cm\n";
     cmd += "import matplotlib.pyplot as plt\n";
@@ -45,6 +49,11 @@ Pi2D::Pi2D()
 
   m_id = s_id;
   s_id++;
+
+  pClass = PyImport_ImportModule("Pi2D");
+  pFuncDrawS = PyObject_GetAttrString(pClass, "DrawS");
+  pFuncDrawV = PyObject_GetAttrString(pClass, "DrawV");
+  pFuncOut = PyObject_GetAttrString(pClass, "Output");
 }
 
 Pi2D::~Pi2D()
@@ -60,6 +69,12 @@ Pi2D::~Pi2D()
       //delete &lut;
   //}
   m_lutList.clear();
+
+  // python  decref
+  Py_DECREF(pFuncDrawS);
+  Py_DECREF(pFuncDrawV);
+  Py_DECREF(pFuncOut);
+  Py_DECREF(pClass);
 }
 
 bool Pi2D::SetAttribute(const string arg)
@@ -87,9 +102,6 @@ bool Pi2D::SetAttribute(const string arg)
     if ( w < 0 || h < 0 ) return false;
     m_imageSz[0] = w;
     m_imageSz[1] = h;
-
-    //string cmd;
-    //PyRun_SimpleString(cmd.c_str());
   } else if ( attr == "arraySize" ) {
     int w, h;
     int n = sscanf(vals.c_str(), "[%d, %d]", &w, &h);
@@ -120,15 +132,6 @@ bool Pi2D::SetAttribute(const string arg)
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
     m_vectorMag = v;
-/*
-  } else if ( attr == "arrSize" ) {
-    int sz[2];
-    int n = sscanf(vals.c_str(), "[%i, %i]", &sz[0], &sz[1]);
-    if ( n != 1 ) return false;
-    if ( sz[0] < 0 || sz[1] < 0) return false;
-    m_arrSz[0] = sz[0];
-    m_arrSz[1] = sz[1];
-*/
   } else {
     //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
@@ -137,9 +140,14 @@ bool Pi2D::SetAttribute(const string arg)
   return true;
 }
 
-bool Pi2D::SetCoord(const Real* arr, const int veclen, 
+bool Pi2D::SetCoord(const Real* arr, const int veclen,
                     const int* vecid)
 {
+  if ( ! vecid ) {
+    m_vecid[0] = 0;
+    m_vecid[1] = 1;
+  }
+
   // set null
   if ( ! arr ) {
     free(m_coord);
@@ -190,8 +198,8 @@ bool Pi2D::SetLUT(const std::string name, const LUT* lut)
 }
 
 bool Pi2D::DrawS(const CVType vt, const Real* data,
-                 const string lutname = "", const int nlevels = 10,
-                 bool cbShow = false)
+                 const string lutname, const int nlevels,
+                 bool cbShow)
 {
   string pystr;
   char pycmd[256];
@@ -200,6 +208,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   //}
 
   int n = m_arraySz[0] * m_arraySz[1];
+/*
   Real* zarr = (Real*)PyDataMem_NEW(sizeof(Real) * n);
 
   for ( int i = 0 ; i < n ; i++ )
@@ -221,18 +230,25 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   }
 
   PyDataMem_FREE(zarr);
+*/
 
   return true;
 }
 
-bool Pi2D::DrawV(const Real* data, const int veclen, const int* vecid,
-                 const string lutname, const int colid,
-                 bool cbShow = false)
+bool Pi2D::DrawV(const Real* data, const int veclen,
+                 const int* vecid, const string lutname,
+                 const int colid, bool cbShow)
 {
+  if ( ! vecid ) {
+    m_vecid_v[0] = 0;
+    m_vecid_v[1] = 1;
+  }
+
   return true;
 }
 
-bool Pi2D::Save(const int step, const int row, const int col)
+bool Pi2D::Save(const int step, const int row, const int col,
+                const int proc)
 {
   return true;
 }
