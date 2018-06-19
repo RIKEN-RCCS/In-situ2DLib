@@ -1,4 +1,4 @@
-PY_VER=3.4
+PY_VER=3.6
 CXX=g++
 G=-g -O0
 FLAGS = `python$(PY_VER)-config --cflags --ldflags` \

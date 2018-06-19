@@ -4,7 +4,8 @@ AR = ar
 
 PY_VER = 3.6
 
-CXXFLAGS = `python$(PY_VER)-config --cflags`
+CXXFLAGS = `python$(PY_VER)-config --cflags` \
+	-I`python$(PY_VER) -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
 LDFLAGS = `python$(PY_VER)-config --ldflags`
 ARFLGS = crsv
 
