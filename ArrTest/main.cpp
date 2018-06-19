@@ -4,12 +4,19 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 
+#if PY_MAJOR_VERSION >= 3
+int init_numpy() {import_array();}
+#else
+void init_numpy() {import_array();}
+#endif
+
+
 int main(int argc, char** argv) {
   PyObject *pModule, *pFunc;
 
   setenv("PYTHONPATH", ".", 0);
   Py_Initialize();
-  import_array();
+  init_numpy();
 
   std::string cmd = "import matplotlib\n";
   cmd += "matplotlib.use('Agg')\n";
