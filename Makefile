@@ -1,6 +1,7 @@
 #!/bin/make
 CXX = g++
 AR = ar
+RANLIB = ranlib
 
 PY_VER = 3.6
 
@@ -17,10 +18,11 @@ OBJS = Pi2D.o LUT.o
 all : $(OBJS) $(TARGET)
 
 .cpp.o :
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -c $<
+	$(CXX) $(CXXFLAGS) -c $<
 
 $(TARGET):	$(OBJS)
 	$(AR) $(ARFLGS) $(TARGET) $(OBJS)
+	$(RANLIB) $(TARGET)
 
 clean:
 	$(RM) $(OBJS) $(TARGET)
