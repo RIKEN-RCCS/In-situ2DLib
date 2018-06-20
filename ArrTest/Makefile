@@ -9,3 +9,6 @@ all : DRAWTEST
 DRAWTEST: main.cpp
 	$(CXX) $(G) -o $@ $< $(FLAGS)
 
+clean :
+	rm -fr DRAWTEST X.png *.pyc *.pyo __pycache__
+
