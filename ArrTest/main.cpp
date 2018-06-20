@@ -14,16 +14,22 @@ void init_numpy() {import_array();}
 int main(int argc, char** argv) {
   PyObject *pModule, *pFunc;
 
-  setenv("PYTHONPATH", ".", 0);
   Py_Initialize();
   init_numpy();
 
   std::string cmd = "import matplotlib\n";
   cmd += "matplotlib.use('Agg')\n";
+  cmd += "import sys; sys.path.append('.')\n";
   PyRun_SimpleString(cmd.c_str());
 
   pModule = PyImport_ImportModule("DRAW");
+  if ( ! pModule || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
   pFunc = PyObject_GetAttrString(pModule, "draw");
+  if ( ! pFunc || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
 
   const int SIZE = 30;
   npy_intp dims[2] = {SIZE, SIZE};

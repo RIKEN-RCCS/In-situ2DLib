@@ -24,6 +24,7 @@ private:
   PyObject* p_data_dict;
 
   static MicroEnv* s_instance;
+  static bool s_debugprint;
 };
 
 #endif // _MICRO_ENV_H_
