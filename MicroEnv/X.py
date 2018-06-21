@@ -1,8 +1,7 @@
 import sys, os
+import MicroEnv
 
-def FUNC(d):
-  a = d['a']
-  a[1][1] = 1
-  sys.stdout.write(str(a) + '\n');
+def FUNC():
+  import pdb; pdb.set_trace()
   return 0
 
