@@ -39,7 +39,7 @@ Pi2D::Pi2D()
     PyRun_SimpleString(cmd.c_str());
 
     cmd = "import matplotlib\n";
-//    cmd += "matplotlib.use('Agg')\n";
+    cmd += "matplotlib.use('Agg')\n";
     cmd += "import numpy as np\n";
     cmd += "import matplotlib.cm as cm\n";
     cmd += "import matplotlib.pyplot as plt\n";
@@ -50,10 +50,26 @@ Pi2D::Pi2D()
   m_id = s_id;
   s_id++;
 
-  pClass = PyImport_ImportModule("Pi2D");
+  pModule = PyImport_ImportModule("Pi2D");
+  if ( ! pModule || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
+  pClass = PyObject_GetAttrString(pModule, "Pi2D");
+  if ( ! pClass || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
   pFuncDrawS = PyObject_GetAttrString(pClass, "DrawS");
+  if ( ! pFuncDrawS || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
   pFuncDrawV = PyObject_GetAttrString(pClass, "DrawV");
+  if ( ! pFuncDrawV || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
   pFuncOut = PyObject_GetAttrString(pClass, "Output");
+  if ( ! pFuncOut || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
 }
 
 Pi2D::~Pi2D()
@@ -75,6 +91,7 @@ Pi2D::~Pi2D()
   Py_DECREF(pFuncDrawV);
   Py_DECREF(pFuncOut);
   Py_DECREF(pClass);
+  Py_DECREF(pModule);
 }
 
 bool Pi2D::SetAttribute(const string arg)
@@ -204,33 +221,44 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   string pystr;
   char pycmd[256];
 
-  //if ( m_veclen == 2 ) {
-  //}
-
   int n = m_arraySz[0] * m_arraySz[1];
-/*
   Real* zarr = (Real*)PyDataMem_NEW(sizeof(Real) * n);
+
+  npy_intp img_dims[2] = {m_imageSz[0],  m_imageSz[1]};
+  long int idims[1] = {2};
+  PyObject *pImgSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+                         reinterpret_cast<void*>(img_dims));
 
   for ( int i = 0 ; i < n ; i++ )
     zarr[i] = data[i];
 
-  npy_intp dims[1] = {n};
-  PyObject* ret = PyArray_SimpleNewFromData(1, dims, NPY_FLOAT, zarr);
+  npy_intp z_dims[2] = {m_arraySz[0],  m_arraySz[1]};
+  PyObject* pZarr =
+      PyArray_SimpleNewFromData(2, z_dims, NPY_FLOAT,
+                                reinterpret_cast<void*>(zarr));
+  if ( ! pZarr || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
+  PyObject* pId = PyLong_FromSize_t(m_id);
+  if ( ! pId || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
 
-  float x = m_imageSz[0] / 100.0;
-  float y = m_imageSz[1] / 100.0;
-  sprintf(pycmd, "fig%d = plt.figure(%d, figsize=(%f, %f))",
-          (int)m_id, (int)m_id, x, y);
-  PyRun_SimpleString(pycmd);
-
-  if ( vt == ColorContour ){
-    //cmd = string("plt.contourf(Z)\n");
-    //PyRun_SimpleString(cmd.c_str());
-  } else {
+  PyObject* pRet = PyObject_CallFunctionObjArgs(pClass, NULL);
+  if ( ! pRet || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
+  pRet = PyObject_CallFunctionObjArgs(pFuncDrawS, pClass,
+                       pId, pImgSz, pZarr, NULL);
+  if ( ! pRet || PyErr_Occurred() ) {
+    PyErr_Print();
   }
 
   PyDataMem_FREE(zarr);
-*/
+  Py_DECREF(pImgSz);
+  Py_DECREF(pZarr);
+  Py_DECREF(pId);
+  //Py_DECREF(pRet);
 
   return true;
 }
@@ -250,6 +278,24 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 bool Pi2D::Save(const int step, const int row, const int col,
                 const int proc)
 {
+  PyObject* pOutName;
+  //string path = m_outputPtn.replace();
+
+#if PY_MAJOR_VERSION >= 3
+  pOutName = PyUnicode_FromString(m_outputPtn.c_str());
+#else
+  pOutName = PyString_FromString(m_outputPtn.c_str());
+#endif
+  if ( ! pOutName || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
+  PyObject* pRet = PyObject_CallFunctionObjArgs(pFuncOut, pClass, 
+                       pOutName, NULL);
+  if ( ! pRet || PyErr_Occurred() ) {
+    PyErr_Print();
+  }
+  Py_DECREF(pOutName);
+
   return true;
 }
 

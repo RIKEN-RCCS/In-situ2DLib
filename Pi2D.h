@@ -54,6 +54,7 @@ private:
   int m_veclen_v;
   int m_vecid_v[2];
 
+  PyObject *pModule;
   PyObject *pClass;
   PyObject *pFuncDrawS;
   PyObject *pFuncDrawV;
