@@ -1,4 +1,8 @@
-// MicroEnv
+/**
+ * @file   MicroEnv.cpp
+ * @brief  Python micro environment for numerical simulation
+ * @author Yoshikawa, Hiroyuki
+ */
 #include "MicroEnv.h"
 #include "numpy/arrayobject.h"
 
@@ -55,40 +59,46 @@ static PyObject* setArray(PyObject *self, PyObject *args) {
     = me->Dmap().find(dname);
   if ( it == me->Dmap().end() ) Py_RETURN_NONE;
   MicroEnv::DataInfo& di = it->second;
+
+  int nd = PyArray_NDIM(arr);
+  npy_intp* dims = PyArray_DIMS(arr);
+  if ( nd < 1 || ! dims ) Py_RETURN_NONE;
+  //npy_intp* shape = PyArray_SHAPE(arr);
+  //npy_intp itemSz = PyArray_ITEMSIZE(arr);
+  //npy_intp* strides = PyArray_STRIDES(arr);
+  npy_intp dimSz = dims[0];
+  for ( int i = 1; i < nd; i++ ) dimSz *= dims[i];
+  if ( dimSz < 1 ) Py_RETURN_NONE;
   
-  PyObject* iter = PyObject_GetIter(arr);
-  if ( ! iter ) Py_RETURN_NONE;
-  PyObject* item;
-  int* pi = (int*)di.p;
-  float* pf = (float*)di.p;
-  double* pd = (double*)di.p;
   switch ( di.dtype ) {
-  case NPY_INT:
-    while ( item = PyIter_Next(iter) ) {
-      *pi++ = (int)PyLong_AsLong(item);
-      Py_DECREF(item);
-    } // end of while
+  case NPY_INT: {
+    int* pi = (int*)di.p;
+    int* arr_pi = (int*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pi[i] = arr_pi[i];
+    }
     break;
-  case NPY_FLOAT:
-    while ( item = PyIter_Next(iter) ) {
-      *pf++ = (float)PyFloat_AsDouble(item);
-      Py_DECREF(item);
-    } // end of while
+  }
+  case NPY_FLOAT: {
+    float* pf = (float*)di.p;
+    double* arr_pf = (double*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pf[i] = (float)arr_pf[i];
+    }
     break;
-  case NPY_DOUBLE:
-    while ( item = PyIter_Next(iter) ) {
-      *pd = PyFloat_AsDouble(item);
-      if ( PyErr_Occurred() ) {
-	PyErr_Print();
-      }
-      Py_DECREF(item);
-      pd++;
-    } // end of while
+  }
+  case NPY_DOUBLE: {
+    double* pd = (double*)di.p;
+    double* arr_pd = (double*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pd[i] = (float)arr_pd[i];
+    }
     break;
-  } // end of switch
-  Py_DECREF(iter);
-  
-  Py_RETURN_NONE;
+  }
+  default:
+    break;
+  } // end of switch  
+  return Py_BuildValue("i", 1);
 }
 
 // MicroEnv module description

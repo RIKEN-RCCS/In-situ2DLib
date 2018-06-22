@@ -1,4 +1,8 @@
-// MicroEnv
+/**
+ * @file   MicroEnv.h
+ * @brief  Python micro environment for numerical simulation
+ * @author Yoshikawa, Hiroyuki
+ */
 #ifndef _MICRO_ENV_H_
 #define _MICRO_ENV_H_
 
@@ -13,6 +17,10 @@
 #endif
 #include "numpy/arrayobject.h"
 
+
+/*! @class MicroEnv
+    @brief MicroEnv C++ class implementation
+*/
 class MicroEnv {
 public:
   ~MicroEnv();
@@ -23,6 +31,9 @@ public:
   bool execute(const std::string& pypath);
   void finalize();
 
+  /*! @struct DataInfo
+      @brief Representation of data exchanged to/from Python
+  */
   struct DataInfo {
     std::string name;
     NPY_TYPES dtype;
@@ -36,6 +47,12 @@ public:
     void operator=(const DataInfo& x) {
       name = x.name; dtype = x.dtype; nd = x.nd; p = x.p;
       for ( int i = 0; i < 8; i++ ) dims[i] = x.dims[i];
+    }
+    npy_intp getDimSz() const {
+      if ( nd < 1 ) return 0;
+      npy_intp dimSz = dims[0];
+      for ( int i = 1; i < nd; i++ ) dimSz *= dims[i];
+      return dimSz;
     }
   };
 

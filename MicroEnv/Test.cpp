@@ -23,7 +23,18 @@ int main(int argc, char** argv) {
     for ( int i = 0; i < di.dims[1]; i++ )
       ((double*)di.p)[di.dims[1]*j + i] = (di.dims[1]*j + i)*0.1;
   me->registDmap(di);
-  
+
+  MicroEnv::DataInfo di2;
+  di2.name = "idx";
+  di2.dtype = NPY_INT;
+  di2.nd = 2;
+  di2.dims[0] = 20; di2.dims[1] = 10;
+  di2.p = new int[di2.dims[0] * di2.dims[1]];
+  for ( int j = 0; j < di2.dims[0]; j++ )
+    for ( int i = 0; i < di2.dims[1]; i++ )
+      ((int*)di2.p)[di2.dims[1]*j + i] = (di2.dims[1]*j + i);
+  me->registDmap(di2);
+
   if ( ! me->execute(std::string("X")) ) {
     printf("MicroEnv::execute failed\n");
     return 3;
@@ -31,7 +42,13 @@ int main(int argc, char** argv) {
 
   for ( int j = 0; j < di.dims[0]; j++ ) {
     for ( int i = 0; i < di.dims[1]; i++ )
-      printf("%g ", ((double*)di.p)[di.dims[1]*j + i]);
+      printf("%.1f ", ((double*)di.p)[di.dims[1]*j + i]);
+    printf("\n");
+  }
+
+  for ( int j = 0; j < di2.dims[0]; j++ ) {
+    for ( int i = 0; i < di2.dims[1]; i++ )
+      printf("%d ", ((int*)di2.p)[di2.dims[1]*j + i]);
     printf("\n");
   }
   
