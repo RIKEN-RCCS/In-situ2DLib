@@ -77,8 +77,12 @@ static PyObject* setArray(PyObject *self, PyObject *args) {
     break;
   case NPY_DOUBLE:
     while ( item = PyIter_Next(iter) ) {
-      *pd++ = PyFloat_AsDouble(item);
+      *pd = PyFloat_AsDouble(item);
+      if ( PyErr_Occurred() ) {
+	PyErr_Print();
+      }
       Py_DECREF(item);
+      pd++;
     } // end of while
     break;
   } // end of switch
