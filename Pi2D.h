@@ -34,13 +34,14 @@ public:
   bool DrawV(const Real*, const int veclen=2, const int* vecidx=NULL, 
              const std::string lutname="", const int colidx=-1,
              bool cbShow=false);
-  bool Save(const int, const int, const int, const int);
+  bool Output(const int step=0, const int row=0, const int col=0,
+            const int proc=0);
   bool ImportAttrib(const std::string);
   bool ExportAttrib(const std::string);
 
   int m_imageSz[2];
   int m_arraySz[2];
-  Real m_viewPoint[4];
+  Real m_viewPort[4];
   std::string m_outputPtn;
   Real* m_coord;
   std::map<std::string, LUT> m_lutList;
