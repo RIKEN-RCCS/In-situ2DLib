@@ -24,5 +24,6 @@ $(TARGET3): $(OBJS3)
 	$(CXX) $(G) -o $@ $(OBJS3) $(LDFLAGS)
 
 clean :
-	rm -fr $(TARGET) $(OBJS) *.pyc *.pyo __pycache__
+	rm -fr *.o *.pyc *.pyo __pycache__
+	rm -f $(TARGET) $(TARGET2) $(TARGET3)
 

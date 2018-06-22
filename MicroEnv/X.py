@@ -1,7 +1,12 @@
 import sys, os
-import MicroEnv
+import MicroEnv as me
 
 def FUNC():
-  import pdb; pdb.set_trace()
+  uvw = me.getArray('uvw');
+
+  uvw = uvw * 10.0
+
+  me.setArray('uvw', uvw)
+  
   return 0
 
