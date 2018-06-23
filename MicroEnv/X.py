@@ -11,6 +11,8 @@ def FUNC():
   ret = me.setArray('idx', idx)
 
   rho = me.getArray('rho')
+  rho[5][5][5] = 10.0
+  ret = me.setArray('rho', rho)
 
   return 0
 

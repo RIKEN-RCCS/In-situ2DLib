@@ -81,9 +81,9 @@ static PyObject* setArray(PyObject *self, PyObject *args) {
   }
   case NPY_FLOAT: {
     float* pf = (float*)di.p;
-    double* arr_pf = (double*)PyArray_DATA(arr);
+    float* arr_pf = (float*)PyArray_DATA(arr);
     for ( int i = 0; i < dimSz; i++ ) {
-      pf[i] = (float)arr_pf[i];
+      pf[i] = arr_pf[i];
     }
     break;
   }
@@ -91,7 +91,7 @@ static PyObject* setArray(PyObject *self, PyObject *args) {
     double* pd = (double*)di.p;
     double* arr_pd = (double*)PyArray_DATA(arr);
     for ( int i = 0; i < dimSz; i++ ) {
-      pd[i] = (float)arr_pd[i];
+      pd[i] = arr_pd[i];
     }
     break;
   }
