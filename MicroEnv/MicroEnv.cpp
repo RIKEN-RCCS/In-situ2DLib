@@ -1,4 +1,8 @@
-// MicroEnv
+/**
+ * @file   MicroEnv.cpp
+ * @brief  Python micro environment for numerical simulation
+ * @author Yoshikawa, Hiroyuki
+ */
 #include "MicroEnv.h"
 #include "numpy/arrayobject.h"
 
@@ -22,46 +26,149 @@ MicroEnv* MicroEnv::GetInstance() {
 }
 
 // CONSTRUCTOR / DESTRUCTOR
-MicroEnv::MicroEnv()
-  : m_initialized(false), p_data_dict(NULL) {
+MicroEnv::MicroEnv() : m_initialized(false) {
 }
 
 MicroEnv::~MicroEnv() {
   finalize();
 }
 
+// MicroEnv module methods
+static PyObject* getArray(PyObject *self, PyObject *args) {
+  MicroEnv* me = MicroEnv::GetInstance();
+  if ( ! me ) Py_RETURN_NONE;
+  char* dname;
+  if ( ! PyArg_ParseTuple(args, "z", &dname) ) Py_RETURN_NONE;
+
+  std::map<std::string, MicroEnv::DataInfo>::iterator it
+    = me->Dmap().find(dname);
+  if ( it == me->Dmap().end() ) Py_RETURN_NONE;
+  MicroEnv::DataInfo& di = it->second;
+  
+  return PyArray_SimpleNewFromData(di.nd, di.dims, di.dtype, di.p);
+}
+
+static PyObject* setArray(PyObject *self, PyObject *args) {
+  MicroEnv* me = MicroEnv::GetInstance();
+  if ( ! me ) Py_RETURN_NONE;
+  char* dname;
+  PyObject* arr;
+  if ( ! PyArg_ParseTuple(args, "zO", &dname, &arr) ) Py_RETURN_NONE;
+
+  std::map<std::string, MicroEnv::DataInfo>::iterator it
+    = me->Dmap().find(dname);
+  if ( it == me->Dmap().end() ) Py_RETURN_NONE;
+  MicroEnv::DataInfo& di = it->second;
+
+  int nd = PyArray_NDIM(arr);
+  npy_intp* dims = PyArray_DIMS(arr);
+  if ( nd < 1 || ! dims ) Py_RETURN_NONE;
+  //npy_intp* shape = PyArray_SHAPE(arr);
+  //npy_intp itemSz = PyArray_ITEMSIZE(arr);
+  //npy_intp* strides = PyArray_STRIDES(arr);
+  npy_intp dimSz = dims[0];
+  for ( int i = 1; i < nd; i++ ) dimSz *= dims[i];
+  if ( dimSz < 1 ) Py_RETURN_NONE;
+  
+  switch ( di.dtype ) {
+  case NPY_INT: {
+    int* pi = (int*)di.p;
+    int* arr_pi = (int*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pi[i] = arr_pi[i];
+    }
+    break;
+  }
+  case NPY_FLOAT: {
+    float* pf = (float*)di.p;
+    float* arr_pf = (float*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pf[i] = arr_pf[i];
+    }
+    break;
+  }
+  case NPY_DOUBLE: {
+    double* pd = (double*)di.p;
+    double* arr_pd = (double*)PyArray_DATA(arr);
+    for ( int i = 0; i < dimSz; i++ ) {
+      pd[i] = arr_pd[i];
+    }
+    break;
+  }
+  default:
+    break;
+  } // end of switch  
+  return Py_BuildValue("i", 1);
+}
+
+// MicroEnv module description
+static PyMethodDef meMethods[] = {
+  {"getArray", getArray, METH_VARARGS, NULL},
+  {"setArray", setArray, METH_VARARGS, NULL},
+  {NULL, NULL, 0, NULL}
+};
+
+
 // METHODS
 bool MicroEnv::initialize() {
   if ( m_initialized ) return true; // already initialized
 
-  // initialize
+  // python initialize
   Py_Initialize();
   init_numpy();
   if ( s_debugprint && PyErr_Occurred() ) {
     PyErr_Print();
   }
-
+  
   // run initial python code
-  std::string cmd = "import matplotlib\n";
-  cmd += "matplotlib.use('Agg')\n";
-  cmd += "import sys; sys.path.append('.')\n";
+  std::string cmd = "import sys; sys.path.append('.')\n";
   PyRun_SimpleString(cmd.c_str());
   if ( s_debugprint && PyErr_Occurred() ) {
     PyErr_Print();
   }
 
-  // load ME.py and get data_dict
-  PyObject* pModule = PyImport_ImportModule("ME");
-  if ( ! pModule ) return false;
-  p_data_dict = PyObject_GetAttrString(pModule, "data_dict");
-  Py_DECREF(pModule);
-  if ( ! p_data_dict ) {
+  // create MicroEnv module
+  PyObject* pModule
+    = PyImport_AddModuleObject(PyUnicode_FromString("MicroEnv"));
+  if ( ! pModule ) {
     if ( s_debugprint && PyErr_Occurred() ) {
       PyErr_Print();
     }
     return false;
   }
+
+  // add data_dict to MicroEnv module
+  PyObject* pDict = PyDict_New();
+  if ( ! pDict ) {
+    if ( s_debugprint && PyErr_Occurred() ) {
+      PyErr_Print();
+    }
+    Py_DECREF(pModule);
+    return false;
+  }
   
+  if ( PyModule_AddObject(pModule, "data_dict", pDict) != 0 ) {
+    if ( s_debugprint && PyErr_Occurred() ) {
+      PyErr_Print();
+    }
+    Py_DECREF(pDict);
+    Py_DECREF(pModule);
+    return false;
+  }
+
+  // add methds to MicroEnv module
+  if ( PyModule_AddFunctions(pModule, meMethods) != 0 ) {
+    if ( s_debugprint && PyErr_Occurred() ) {
+      PyErr_Print();
+    }
+    Py_DECREF(pDict);
+    Py_DECREF(pModule);
+    return false;
+  }
+
+  // clear dmap
+  m_dmap.clear();
+
   m_initialized = true;
   return true;
 }
@@ -90,7 +197,7 @@ bool MicroEnv::execute(const std::string& pypath) {
     return false;
   }
 
-  PyObject *pRet = PyObject_CallFunctionObjArgs(pFunc, p_data_dict, NULL);
+  PyObject *pRet = PyObject_CallFunctionObjArgs(pFunc, NULL);
   Py_DECREF(pFunc);
   if ( pRet ) {
     long ret = PyLong_AsLong(pRet);
@@ -101,22 +208,6 @@ bool MicroEnv::execute(const std::string& pypath) {
       }
       return false;
     }
-    PyObject* pa = PyDict_GetItemString(p_data_dict, "a");
-    if ( ! pa ) {
-      if ( s_debugprint && PyErr_Occurred() ) {
-	PyErr_Print();
-      }
-      return false;
-    }
-
-    PyArrayObject* pnarr = reinterpret_cast<PyArrayObject*>(pa);
-    npy_intp* na_shape = PyArray_SHAPE(pnarr);
-    long double* darr = reinterpret_cast<long double*>(PyArray_DATA(pa));
-    for ( long l = 0; l < na_shape[0]*na_shape[1]; l++ ) {
-      printf("%lg ", darr[l]);
-    }
-    printf("\n");
-    
     return true;
   }
   if ( s_debugprint && PyErr_Occurred() ) {
@@ -127,10 +218,22 @@ bool MicroEnv::execute(const std::string& pypath) {
 
 void MicroEnv::finalize() {
   if ( ! m_initialized ) return;
-  if ( p_data_dict ) {
-    Py_DECREF(p_data_dict);
-    p_data_dict = NULL;
-  }
   Py_Finalize();
   m_initialized = false;
+}
+
+bool MicroEnv::registDmap(MicroEnv::DataInfo& di) {
+  if ( di.name.empty() ) return false;
+  if ( di.nd < 1 ) return false;
+  for ( int i = 0; i < di.nd; i++ )
+    if ( di.dims[i] < 1 ) return false;
+  if ( ! di.p ) return false;
+  switch ( di.dtype ) {
+  case NPY_INT: case NPY_FLOAT: case NPY_DOUBLE:
+    break;
+  default:
+    return false;
+  }
+  m_dmap[di.name] = di;
+  return true;
 }
