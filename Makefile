@@ -13,14 +13,15 @@ ARFLGS = crsv
 PROG = Pi2D
 TARGET = lib$(PROG).a
 
-OBJS = Pi2D.o LUT.o
+OBJS =	Pi2D.o LUT.o \
+	pi2d_exif.o
 
 all : $(OBJS) $(TARGET)
 
 .cpp.o :
 	$(CXX) $(CXXFLAGS) -c $<
 
-$(TARGET):	$(OBJS)
+$(TARGET): $(OBJS)
 	$(AR) $(ARFLGS) $(TARGET) $(OBJS)
 	$(RANLIB) $(TARGET)
 
