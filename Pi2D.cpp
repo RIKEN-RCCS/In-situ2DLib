@@ -176,16 +176,16 @@ bool Pi2D::SetAttribute(const string arg)
 bool Pi2D::SetCoord(const Real* arr, const int veclen,
                     const int* vecid)
 {
-  if ( ! vecid ) {
-    m_vecid[0] = 0;
-    m_vecid[1] = 1;
-  }
-
   // set null
   if ( ! arr ) {
     free(m_coord);
-    //m_coord = NULL;
+    m_coord = NULL;
     return true;
+  }
+
+  if ( ! vecid ) {
+    m_vecid[0] = 0;
+    m_vecid[1] = 1;
   }
 
   if ( veclen < 2 )
@@ -198,7 +198,7 @@ bool Pi2D::SetCoord(const Real* arr, const int veclen,
   m_vecid[0] = vecid[0];
   m_vecid[1] = vecid[1];
 
-  int sz = m_arraySz[0] * m_arraySz[1] * veclen;
+  int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
   m_coord = (Real*)realloc(m_coord, sz * sizeof(Real));
 
   if ( ! m_coord )
@@ -253,6 +253,15 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
+  // set ArraySize
+  npy_intp arrsz[2] = {m_arraySz[0],  m_arraySz[1]};
+  PyObject *pArrSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+                         reinterpret_cast<void*>(arrsz));
+  if ( ! pArrSz || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
   // set viewPort
   long int vdims[1] = {4};
   //Real* vp = (Real*)PyDataMem_NEW(sizeof(Real) * 4);
@@ -269,12 +278,54 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
+  // set contour type
   PyObject* pCtype = NULL;
   if ( vt == ColorContour )
     pCtype = PyLong_FromLong(0);
   else if ( vt == ContourLine )
     pCtype = PyLong_FromLong(1);
   if ( ! pCtype || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set nlevels
+  PyObject* pNlevel = PyLong_FromLong(nlevels);
+  if ( ! pNlevel || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set veclen
+  PyObject* pVlen = PyLong_FromLong(m_veclen);
+  if ( ! pVlen || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set vecid
+  npy_intp vid[2] = {m_vecid[0],  m_vecid[1]};
+  PyObject *pVid = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+                         reinterpret_cast<void*>(vid));
+  if ( ! pVid || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set coord
+  PyObject* pCoord;
+  if ( m_coord ) {
+    int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
+    long int cdims[1] = {sz};
+    pCoord =
+        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(m_coord));
+  } else {
+    long int cdims[1] = {1};
+    Real null_coord[1] = {0.0};
+    pCoord =
+        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(null_coord));
+  }
+  if ( ! pCoord || PyErr_Occurred() ) {
     PyErr_Print();
     ret = false;
   }
@@ -306,7 +357,9 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   }
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawS, pClass,
-                   pId, pImgSz, pVP, pCtype, pZarr, NULL);
+                   pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
+//                   pCtype, pNlevel, pZarr, NULL);
+                   pCtype, pZarr, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       PyErr_Print();
       ret = false;
@@ -315,11 +368,16 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
 
 //  PyDataMem_FREE(zarr);
 //  PyDataMem_FREE(vp);
+  if ( pId ) Py_DECREF(pId);
   if ( pImgSz ) Py_DECREF(pImgSz);
   if ( pVP ) Py_DECREF(pVP);
-  if ( pZarr ) Py_DECREF(pZarr);
-  if ( pId ) Py_DECREF(pId);
+  if ( pArrSz ) Py_DECREF(pArrSz);
+  if ( pCoord ) Py_DECREF(pCoord);
+  if ( pNlevel ) Py_DECREF(pVP);
+  if ( pVlen ) Py_DECREF(pVlen);
   if ( pCtype ) Py_DECREF(pCtype);
+  if ( pVid ) Py_DECREF(pVid);
+  if ( pZarr ) Py_DECREF(pZarr);
 
   return ret;
 }
@@ -328,7 +386,11 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
                  const int* vecid, const string lutname,
                  const int colid, bool cbShow)
 {
-  if ( ! vecid ) {
+  m_veclen_v = veclen;
+  if ( vecid ) {
+    m_vecid_v[0] = vecid[0];
+    m_vecid_v[1] = vecid[1];
+  } else {
     m_vecid_v[0] = 0;
     m_vecid_v[1] = 1;
   }
