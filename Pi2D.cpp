@@ -110,7 +110,7 @@ Pi2D::~Pi2D()
     Py_DECREF(pModule);
 }
 
-bool Pi2D::SetAttribute(const string arg)
+bool Pi2D::SetAttrib(const string arg)
 {
   // check empty argument
   if ( arg.empty() ) {

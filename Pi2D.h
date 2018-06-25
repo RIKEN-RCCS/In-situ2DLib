@@ -8,25 +8,16 @@
 #include "LUT.h"
 #include <Python.h>
 
-#ifdef _REAL_DBL
-  typedef double Real;
-#else
-  typedef float Real;
-#endif
+#include "Pi2Ddefs.h"
 
-enum CVType {
-  ColorContour = 0,
-  ContourLine = 1,
-};
 
-class Pi2D
-{
+class Pi2D {
 public:
   static size_t s_id;
 
   Pi2D();
   ~Pi2D();
-  bool SetAttribute(const std::string);
+  bool SetAttrib(const std::string);
   bool SetCoord(const Real*, const int veclen=2, const int* vecidx=NULL);
   bool SetLUT(const std::string, const LUT*);
   bool DrawS(const CVType, const Real*, const std::string lutname="",
