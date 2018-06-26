@@ -54,6 +54,15 @@ C/C++プログラムからPythonコードにデータを渡す場合、呼び出
 MicroEnvに登録(登録用API、またはJSON等の設定ファイルで)しておくことで
 実現可能と考えられる。
 
+### Pythonコードからのデータ更新
+
+C++コード側(シミュレーションプログラム内またはMicroEnv内)に、Pythonコードから
+データを設定するためのインターフェースを用意しておく必要がある。
+
+単純なパラメータの場合は、パラメータ記述設定ファイルの更新で実現でき、
+また配列の場合は実装工数が大きくなることが予想され、かつメモリ効率の悪さも
+想定されるため、実用性については要検討である。
+
 ### ファイルの更新チェック
 
 シミュレーションプログラムの制御(ステアリング)機能自体は、パラメータが記述された
@@ -93,15 +102,6 @@ int main(int argc, char** argv) {
 尚、設定ファイルの更新チェックと、更新時の再読み込み・パラメータ反映は
 MicroEnvの機能の範囲外であるが、MicroEnvから呼び出されるPythonコードが
 設定ファイルの更新を行うことがユースケースとして想定される。
-
-### Pythonコードからのデータ更新
-
-C++コード側(シミュレーションプログラム内またはMicroEnv内)に、Pythonコードから
-データを設定するためのSetterインターフェースを用意しておく必要がある。
-
-単純なパラメータの場合は、パラメータ記述設定ファイルの更新で実現でき、
-また配列の場合は実装工数が大きくなることが予想され、かつメモリ効率の悪さも
-想定されるため、実現の可否については要検討である。
 
 ### Pythonコード内でのMPI関数実行
 
@@ -152,3 +152,83 @@ int main(int argc, char *argv[]) {
 mpicxx -o MPI4PyTest MPI4PyTest.cpp `python-config --cflags --ldflags`
 mpiexec -n 3 ./MPI4PyTest
 ```
+
+## プロトタイプ実装
+---
+MicroEnvのプロトタイプ実装を行った。
+このプロトタイプは、C++のMicroEnvクラスとして実装されている。
+
+MicroEnvクラスはシングルトンパターンで実装されており、プログラム中で１つの
+インスタンスしか作成できない。
+ユーザープログラム内では、`MicroEnv::GetInstance()`メソッドで(唯一の)
+インスタンスを取得し、このインスタンスを介してPythonコードの実行を行う。
+
+```
+MicroEnv* me = MicroEnv::GetInstance();
+me->initialize();
+me->execute(std::string("MyScript"));
+me->finalize();
+```
+
+上記はユーザープログラム内を想定した擬似コードであり、
+ユーザー作成のPythonスクリプト`MyScript.py`が実行される。
+
+尚、MicroEnvのプロトタイプ実装ではPython3.3以降で実装されたAPIを
+使用しているため、コンパイル・実行にはにはPython3環境が必要である。
+
+### ユーザー作成のPythonスクリプト
+
+MicroEnvは、`execute()`メソッドで指定されたPythonスクリプト中の関数`FUNC()`を
+引数無しで呼び出し実行する。従ってユーザー作成のPythonスクリプト中には、
+`FUNC()`という関数が定義されている必要がある。
+
+ユーザー作成のPythonスクリプトでは、`MicroEnv`モジュールをimportし、
+このモジュールを通してユーザープログラムとのデータのやり取りを行う。
+
+```
+import MicroEnv as me
+def FUNC():
+  rho = me.getArray('rho')
+  rho = rho * 0.98
+  ret = me.setArray('rho', rho)
+  return 0
+```
+
+上記はユーザー作成のPythonスクリプトを想定した擬似コードで、
+ユーザープログラム中の配列`rho`を取得し、全要素を0.98倍してユーザープログラムに
+戻している。
+
+この`rho`は、ユーザープログラム中でMicroEnvクラスの`registDmap()`メソッドで
+登録しておく必要がある。
+
+`registDmap()`メソッドでのデータ登録は、MicroEnvの内部クラスDataInfoを用いて行う。
+
+```
+  struct DataInfo {
+    std::string name;
+    NPY_TYPES dtype;
+    int nd;
+    npy_intp dims[8];
+    void* p;
+  };
+```
+
+具体的なデータ登録は、以下のように行う。
+
+```
+MicroEnv::DataInfo di;
+di.name = "rho";
+di.dtype = NPY_DOUBLE;
+di.nd = 3;
+di.dims[0] = 64; di.dims[1] = 32; di.dims[2] = 32;
+di.p = p_rho;
+
+MicroEnv* me = MicroEnv::GetInstance();
+me->registDmap(di);
+```
+
+ここで、`p_rho`はサイズが(64, 32, 32)のdouble型の配列(へのポインタ)である。
+
+---
+- updated: 2018/06/26
+- author: Yoshikawa, Hiroyuki, FUJITSU LIMITED
