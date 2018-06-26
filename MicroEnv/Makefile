@@ -1,6 +1,5 @@
 PY_VER=3.6
-CXX=g++
-MPICXX=mpicxx
+CXX=mpicxx
 G=-g -O0
 CXXFLAGS = `python$(PY_VER)-config --cflags | sed -e 's/-arch i386//'` \
 	-I`python$(PY_VER) -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
@@ -22,10 +21,7 @@ $(TARGET2): $(OBJS2)
 	$(CXX) $(G) -o $@ $(OBJS2) $(LDFLAGS)
 
 $(TARGET3): $(OBJS3)
-	$(MPICXX) $(G) -o $@ $(OBJS3) $(LDFLAGS)
-
-MPI4PyTest.o : MPI4PyTest.cpp
-	$(MPICXX) $(G) -c $< $(CXXFLAGS)
+	$(CXX) $(G) -o $@ $(OBJS3) $(LDFLAGS)
 
 clean :
 	rm -fr *.o *.pyc *.pyo __pycache__ *.dSYM

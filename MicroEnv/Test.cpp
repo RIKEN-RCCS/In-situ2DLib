@@ -1,7 +1,10 @@
 #include "MicroEnv.h"
-
+#include <mpi.h>
 
 int main(int argc, char** argv) {
+  int rank, size;
+  MPI_Init(&argc, &argv);
+
   MicroEnv* me = MicroEnv::GetInstance();
   if ( ! me ) {
     printf("MicroEnv::GetInstance failed\n");
@@ -12,6 +15,10 @@ int main(int argc, char** argv) {
     printf("MicroEnv::initialize failed\n");
     return 2;
   }
+
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  printf("rank = %d of %d\n", rank, size);
 
   MicroEnv::DataInfo di;
   di.name = "uvw";
@@ -76,5 +83,7 @@ int main(int argc, char** argv) {
 
   me->finalize();
   delete me;
+
+  MPI_Finalize();
   return 0;
 }

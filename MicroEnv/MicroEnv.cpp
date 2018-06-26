@@ -122,6 +122,9 @@ bool MicroEnv::initialize() {
   
   // run initial python code
   std::string cmd = "import sys; sys.path.append('.')\n";
+  cmd += "import mpi4py\n";
+  cmd += "mpi4py.rc.initialize = False\n";
+  cmd += "mpi4py.rc.finalize = False\n";
   PyRun_SimpleString(cmd.c_str());
   if ( s_debugprint && PyErr_Occurred() ) {
     PyErr_Print();
