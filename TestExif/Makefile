@@ -1,9 +1,17 @@
 G=-g
+PY_VER=3.6
 FC=gfortran
 CC=gcc
 FFLAGS=-I.. $(G)
 CFLAGS=-I.. $(G)
-LIBS=../libPi2D.a `python3.5-config --ldflags` -lstdc++
+LDFLAGS=../libPi2D.a `python$(PY_VER)-config --ldflags` 
+
+ARCH=$(shell uname -s)
+ifeq ($(ARCH), Darwin)
+LIBS=-lc++
+else
+LIBS=-lstdc++
+endif
 
 .SUFFIXES: .c .f90 .o
 
@@ -14,10 +22,10 @@ LIBS=../libPi2D.a `python3.5-config --ldflags` -lstdc++
 	$(CC) $(CFLAGS) -c $<
 
 TestF: TestF.o
-	$(FC) -o $@ TestF.o $(LIBS)
+	$(FC) -o $@ TestF.o $(LDFLAGS) $(LIBS)
 
 TestC: TestC.o
-	$(CC) -o $@ TestC.o $(LIBS)
+	$(CC) -o $@ TestC.o $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -fr TestC TestF *.o *.pyc __pycache__
