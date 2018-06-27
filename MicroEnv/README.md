@@ -4,7 +4,7 @@
 ---
 MicroEnvは、九州大学情報基盤研究開発センターの小野先生が構想する
 InSitu/InTransit用のフレームワークの機能で、データ分析、可視化、
-シミュレーションの制御を、小さなPythonコードで行うことを目的と
+シミュレーションの制御を、小さなPythonコードの実行によって行うことを目的と
 するものである。
 
 MicroEnvを使用するシミュレーションコードでは、以下のような使用方法が
@@ -170,8 +170,12 @@ me->execute(std::string("MyScript"));
 me->finalize();
 ```
 
-上記はユーザープログラム内を想定した擬似コードであり、
-ユーザー作成のPythonスクリプト`MyScript.py`が実行される。
+上記はユーザープログラム内を想定した擬似コードであり、`me->execute()`
+においてユーザー作成のPythonスクリプト`MyScript.py`が実行される。
+
+初期化コード(`me->initialize()`)内では、Pythonの初期化である
+`Py_Initialize()`の実行と、ユーザープログラムがMPI並列実行されることを
+想定して、mpi4pyでの`MPI_Init`の呼出し抑制の設定が行われる。
 
 尚、MicroEnvのプロトタイプ実装ではPython3.3以降で実装されたAPIを
 使用しているため、コンパイル・実行にはにはPython3環境が必要である。
@@ -213,7 +217,9 @@ def FUNC():
   };
 ```
 
-具体的なデータ登録は、以下のように行う。
+今回のプロトタイプ実装では、登録できるデータは最大8次元に制限している(`npy_intp dims[8]`)。
+
+ユーザープログラムでの具体的なデータ登録は、以下のように行う。
 
 ```
 MicroEnv::DataInfo di;
@@ -230,5 +236,5 @@ me->registDmap(di);
 ここで、`p_rho`はサイズが(64, 32, 32)のdouble型の配列(へのポインタ)である。
 
 ---
-- updated: 2018/06/26
+- updated: 2018/06/29
 - author: Yoshikawa, Hiroyuki, FUJITSU LIMITED
