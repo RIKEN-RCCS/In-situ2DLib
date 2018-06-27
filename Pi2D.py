@@ -92,8 +92,16 @@ class Pi2D:
     if ( cbShow ):
       pass
 
+    csz = arrSz[0] * arrSz[1];
+    val0 = vals.reshape(csz, vlen)
+    u0 = val0[:, [vid[0]]]
+    u1 = u0.flatten()
+    u = u1.reshape(arrSz[0], arrSz[1])
+    v0 = val0[:, [vid[1]]]
+    v1 = v0.flatten()
+    v = v1.reshape(arrSz[0], arrSz[1])
+
     if ( len(coord) != 1 ):
-      csz = arrSz[0] * arrSz[1];
       coord0 = coord.reshape(csz, veclen)
       x0 = coord0[:, [vecid[0]]]
       x1 = x0.flatten()
@@ -101,15 +109,45 @@ class Pi2D:
       y0 = coord0[:, [vecid[1]]]
       y1 = y0.flatten()
       y = y1.reshape(arrSz[0], arrSz[1])
-      plt.quiver(x, y, u, v, angles='xy', scale_units='xy', scale=1, color=clist)
+      #plt.quiver(x, y, u, v, angles='xy', scale_units='xy', scale=1, color=clist)
+      plt.quiver(x, y, u, v, angles='xy', scale_units='xy', scale=1)
     else:
-      plt.quiver(u, v, angles='xy', scale_units='xy', scale=1, color=clist)
+      #plt.quiver(u, v, angles='xy', scale_units='xy', scale=1, color=clist)
+      plt.quiver(u, v, angles='xy', scale_units='xy', scale=1)
 
     return True
 
-  def Output(self, outname):
-    #outname = "out.png"
-    print(outname)
-    self.fig.savefig(outname)
+  def Output(self, outname, step, row, col, proc):
+    fname = outname
+    p = fname.find('%S')
+    if ( p != -1 ):
+      n = int(fname[p+2])
+      if ( n != -1 ):
+        s = '%0' + fname[p+2] + 'd'
+        s = s % step
+        fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%R')
+    if ( p != -1 ):
+      n = int(fname[p+2])
+      if ( n != -1 ):
+        s = '%0' + fname[p+2] + 'd'
+        s = s % row
+        fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%C')
+    if ( p != -1 ):
+      n = int(fname[p+2])
+      if ( n != -1 ):
+        s = '%0' + fname[p+2] + 'd'
+        s = s % col
+        fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%P')
+    if ( p != -1 ):
+      n = int(fname[p+2])
+      if ( n != -1 ):
+        s = '%0' + fname[p+2] + 'd'
+        s = s % proc
+        fname = fname[0:p] + s + fname[p+3:]
+    
+    self.fig.savefig(fname)
     return True
 

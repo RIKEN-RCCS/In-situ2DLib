@@ -8,6 +8,12 @@ int init_numpy() {import_array();}
 void init_numpy() {import_array();}
 #endif
 
+#ifdef _REAL_DBL
+int NPY_REAL = NPY_DOUBLE;
+#else
+int NPY_REAL = NPY_FLOAT;
+#endif
+
 using namespace std;
 
 size_t Pi2D::s_id = 0;
@@ -95,8 +101,6 @@ Pi2D::Pi2D()
 
 Pi2D::~Pi2D()
 {
-  //if ( m_id == 0 )
-  //  Py_Finalize();
   if ( m_coord )
     delete[] m_coord;
   //map<string, LUT>::iterator itr;
@@ -275,7 +279,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   // set viewPort
   long int vdims[1] = {4};
   PyObject* pVP =
-      PyArray_SimpleNewFromData(1, vdims, NPY_FLOAT,
+      PyArray_SimpleNewFromData(1, vdims, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
     PyErr_Print();
@@ -315,12 +319,12 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
     pCoord =
-        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(m_coord));
+        PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
   } else {
     long int cdims[1] = {1};
     Real null_coord[1] = {0.0};
     pCoord =
-        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(null_coord));
+        PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
   if ( ! pCoord || PyErr_Occurred() ) {
     PyErr_Print();
@@ -334,17 +338,16 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
 //  for ( int i = 0 ; i < n ; i++ )
 //    zarr[i] = data[i];
 //  PyObject* pZarr =
-//      PyArray_SimpleNewFromData(2, z_dims, NPY_FLOAT,
+//      PyArray_SimpleNewFromData(2, z_dims, NPY_REAL,
 //                                reinterpret_cast<void*>(zarr));
   PyObject* pZarr =
-      PyArray_SimpleNewFromData(2, z_dims, NPY_FLOAT, (void*)(data));
+      PyArray_SimpleNewFromData(2, z_dims, NPY_REAL, (void*)(data));
   if ( ! pZarr || PyErr_Occurred() ) {
     PyErr_Print();
     ret = false;
   }
 
   // set lut name
-  printf("dbg: lutname = %s\n", lutname.c_str());
   PyObject* pLut;
 #if PY_MAJOR_VERSION >= 3
   pLut = PyUnicode_FromString(lutname.c_str());
@@ -357,7 +360,6 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   }
 
   // set nlevels
-  printf("dbg: nlevels = %d\n", nlevels);
   PyObject* pNlevel = PyLong_FromLong(nlevels);
   if ( ! pNlevel || PyErr_Occurred() ) {
     PyErr_Print();
@@ -452,7 +454,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   // set viewPort
   long int vdims[1] = {4};
   PyObject* pVP =
-      PyArray_SimpleNewFromData(1, vdims, NPY_FLOAT,
+      PyArray_SimpleNewFromData(1, vdims, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
     PyErr_Print();
@@ -481,12 +483,12 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
     int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
     pCoord =
-        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(m_coord));
+        PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
   } else {
     long int cdims[1] = {1};
     Real null_coord[1] = {0.0};
     pCoord =
-        PyArray_SimpleNewFromData(1, cdims, NPY_FLOAT, (void*)(null_coord));
+        PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
   if ( ! pCoord || PyErr_Occurred() ) {
     PyErr_Print();
@@ -494,16 +496,16 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   }
 
   // set data
-  npy_intp v_dims[2] = {m_arraySz[1],  m_arraySz[0]};
+  int sz = m_arraySz[0] * m_arraySz[1] * m_veclen_v;
+  long int cdims[1] = {sz};
   PyObject* pVal =
-      PyArray_SimpleNewFromData(2, v_dims, NPY_FLOAT, (void*)(data));
+      PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(data));
   if ( ! pVal || PyErr_Occurred() ) {
     PyErr_Print();
     ret = false;
   }
 
   // set lut name
-  printf("dbg: lutname = %s\n", lutname.c_str());
   PyObject* pLut;
 #if PY_MAJOR_VERSION >= 3
   pLut = PyUnicode_FromString(lutname.c_str());
@@ -550,8 +552,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawV, pClass,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
-                   pVal, pVlenV, pVidV, pLut, pShow,
-                   pWidth, NULL);
+                   pVal, pVlenV, pVidV, pLut, pShow, pWidth, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       PyErr_Print();
       ret = false;
@@ -581,31 +582,18 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   bool ret = true;
 
-  if ( step < 0 || step > 9 )
-    return false;
-  if ( row < 0 || row > 9 )
-    return false;
-  if ( col < 0 || col > 9 )
-    return false;
-  if ( proc < 0 || proc > 9 )
-    return false;
-
-  //string path = m_outputPtn.replace();
   /*
-  size_t p = m_outputPtn.find("%S");
-  if ( p != string::npos ) {
-    if ( m_outputPtn.size() > p+2 ) {
-      char& c = m_outputPtn[p+2];
-      int n = atoi(&c);
-      if ( n == 0 && strncmp(&c, "0", 1) != 0 )
-        printf("error: %s\n", &c);
-      else
-        printf("dbg: %d: %d\n", p, n);
-    }
-  }
-  return true;
+  if ( step < 0 )
+    return false;
+  if ( row < 0 )
+    return false;
+  if ( col < 0 )
+    return false;
+  if ( proc < 0 )
+    return false;
   */
 
+  // set outputPtn
 #if PY_MAJOR_VERSION >= 3
   pOutName = PyUnicode_FromString(m_outputPtn.c_str());
 #else
@@ -616,16 +604,50 @@ bool Pi2D::Output(const int step, const int row, const int col,
     ret = false;
   }
 
+  // set step
+  PyObject* pStep = PyLong_FromLong(step);
+  if ( ! pStep || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set row
+  PyObject* pRow = PyLong_FromLong(row);
+  if ( ! pRow || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set col
+  PyObject* pCol = PyLong_FromLong(col);
+  if ( ! pCol || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set proc
+  PyObject* pProc = PyLong_FromLong(proc);
+  if ( ! pProc || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // call python function
   if ( ret ) {
     PyObject* pRet = PyObject_CallFunctionObjArgs(pFuncOut, pClass, 
-                         pOutName, NULL);
+                         pOutName, pStep, pRow, pCol, pProc, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       PyErr_Print();
       ret = false;
     }
   }
 
+  // decref PyObject
   if ( pOutName ) Py_DECREF(pOutName);
+  if ( pStep ) Py_DECREF(pStep);
+  if ( pRow ) Py_DECREF(pRow);
+  if ( pCol ) Py_DECREF(pCol);
+  if ( pProc ) Py_DECREF(pProc);
 
   return ret;
 }
