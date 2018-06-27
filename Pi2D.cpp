@@ -27,6 +27,8 @@ Pi2D::Pi2D()
   m_lutList.clear();
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
+  m_vectorHeadRatio[0] = -1.0;
+  m_vectorHeadRatio[1] = -1.0;
  
   pModule = NULL;
   pClass = NULL;
@@ -626,32 +628,4 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pOutName ) Py_DECREF(pOutName);
 
   return ret;
-}
-
-bool Pi2D::ImportAttrib(const string path)
-{
-  if ( path.empty() )
-    return false;
-
-  FILE *fp;
-  fp = fopen(path.c_str(), "r");
-  if ( ! fp )
-    return false;
-  fclose(fp);
-
-  return true;
-}
-
-bool Pi2D::ExportAttrib(const string path)
-{
-  if ( path.empty() )
-    return false;
-
-  FILE *fp;
-  fp = fopen(path.c_str(), "w");
-  if ( ! fp )
-    return false;
-  fclose(fp);
-
-  return true;
 }

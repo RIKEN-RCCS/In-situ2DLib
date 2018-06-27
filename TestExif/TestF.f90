@@ -13,8 +13,8 @@ program testf
   enddo
 
   iret = pi2d_init()
-  atrarg = "arraySize=[60,80]"
-  iret = pi2d_setattrib(atrarg, 17)
+  atrarg = "arraySize=80,60"
+  iret = pi2d_setattrib(atrarg, 15)
   lutn = "default"
   iret = pi2d_draws(0, data, lutn, 7, 10, 0)
   iret = pi2d_output(0, 0, 0, 0)

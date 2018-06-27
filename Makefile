@@ -15,6 +15,7 @@ PROG = Pi2D
 TARGET = lib$(PROG).a
 
 OBJS =	Pi2D.o LUT.o \
+	Pi2D_json.o \
 	pi2d_exif.o
 
 all : $(OBJS) $(TARGET)
