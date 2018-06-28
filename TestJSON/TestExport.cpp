@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
   lut.colorList[0.0] = color_s(0.0, 0.0, 1.0);
   lut.colorList[50.0] = color_s(0.0, 1.0, 0.0);
   lut.colorList[100.0] = color_s(1.0, 0.0, 0.0);
+  lut.cbHoriz = true;
   p.m_lutList["rgb"] = lut;
 
   p.ExportAttrib("X.json");

@@ -3,13 +3,71 @@
 //
 #include "Pi2D.h"
 
-#include <iostream> // std::cout
-#include <fstream>  // std::ifstream
+#include <iostream>
+#include <fstream>
 #include <cstdio>
+#include <cmath>
 
 #include "picojson.h"
 
 using namespace std;
+
+// STATIC util
+static bool ParseLUT(Pi2D* pi2d, picojson::object& lutObjs) {
+  if ( ! pi2d ) return false;
+
+  // clear lutList of pi2d
+  pi2d->m_lutList.clear();
+
+  // parse lut series
+  picojson::object::iterator lit;
+  for ( lit = lutObjs.begin(); lit != lutObjs.end(); lit ++ ) {
+    string lutName = lit->first;
+    picojson::object lutO = lit->second.get<picojson::object>();
+    LUT xlut;
+
+    picojson::object::iterator lait;
+    for ( lait = lutO.begin(); lait != lutO.end(); lait++ ) {
+      string kwd = lait->first;
+      if ( kwd == "cbSize" ) {
+	picojson::array xarr = lait->second.get<picojson::array>();
+	if ( xarr.size() < 2 ) continue;
+	xlut.cbSize[0] = (int)xarr[0].get<double>();
+	xlut.cbSize[1] = (int)xarr[1].get<double>();
+      }
+      else if ( kwd == "cbPos" ) {
+	picojson::array xarr = lait->second.get<picojson::array>();
+	if ( xarr.size() < 2 ) continue;
+	xlut.cbPos[0] = (int)xarr[0].get<double>();
+	xlut.cbPos[1] = (int)xarr[1].get<double>();
+      }
+      else if ( kwd == "cbHoriz" ) {
+	xlut.cbHoriz = lait->second.get<bool>();
+      }
+      else if ( kwd == "cbNumTic" ) {
+	xlut.cbNumTic = (size_t)lait->second.get<double>();
+      }
+      else if ( kwd == "colorList" ) {
+	picojson::array xarr = lait->second.get<picojson::array>();
+	for ( int i = 0; i < xarr.size(); i++ ) {
+	  picojson::array yarr = xarr[i].get<picojson::array>();
+	  if ( yarr.size() < 2 ) continue;
+	  Real val = (Real)yarr[0].get<double>();
+	  picojson::array zarr = yarr[1].get<picojson::array>();
+	  if ( zarr.size() < 3 ) continue;
+	  color_s rgb;
+	  rgb.red = (float)zarr[0].get<double>();
+	  rgb.green = (float)zarr[1].get<double>();
+	  rgb.blue = (float)zarr[2].get<double>();
+	  xlut.colorList[val] = rgb;
+	} // end of for(i)
+      }
+    } // end of for(lait)
+
+    pi2d->m_lutList[lutName] = xlut;
+  } // end of for(lit)
+  return true;
+}
 
 
 bool Pi2D::ImportAttrib(const string path)
@@ -24,19 +82,69 @@ bool Pi2D::ImportAttrib(const string path)
 
   // picojsonへ読み込み、ファイルクローズ
   picojson::value val;
-  fs >> val;
+  try {
+    fs >> val;
+  } catch (const exception& e) {
+    fs.close();
+    return false;
+  }
   fs.close();
 
   // トップレベルオブジェクトを取得
-  picojson::object o, o0;
+  picojson::object root, Pi2DAttr;
   try {
-    o = val.get<picojson::object>();
-    o0 = o["Pi2DAttr"].get<picojson::object>();
+    root = val.get<picojson::object>();
+    Pi2DAttr = root["Pi2DAttr"].get<picojson::object>();
   } catch (const exception& e) {
     return false;
   }
 
-
+  // 属性のパース
+  picojson::object::iterator it;
+  for ( it = Pi2DAttr.begin(); it != Pi2DAttr.end(); it++ ) {
+    string kwd = it->first;
+    if ( kwd == "imageSize" ) {
+      picojson::array xarr = it->second.get<picojson::array>();
+      if ( xarr.size() < 2 ) continue;
+      m_imageSz[0] = (int)xarr[0].get<double>();
+      m_imageSz[1] = (int)xarr[1].get<double>();
+    }
+    else if ( kwd == "arraySize" ) {
+      picojson::array xarr = it->second.get<picojson::array>();
+      if ( xarr.size() < 2 ) continue;
+      m_arraySz[0] = (int)xarr[0].get<double>();
+      m_arraySz[1] = (int)xarr[1].get<double>();
+    }
+    else if ( kwd == "viewport" ) {
+      picojson::array xarr = it->second.get<picojson::array>();
+      if ( xarr.size() < 4 ) continue;
+      for ( int i = 0; i < 4; i++ )
+	m_viewPort[i] = (Real)xarr[i].get<double>();
+    }
+    else if ( kwd == "outfilePat" ) {
+      m_outputPtn = it->second.get<string>();
+    }
+    else if ( kwd == "lineWidth" ) {
+      m_lineWidth = (Real)it->second.get<double>();
+    }
+    else if ( kwd == "vectorMag" ) {
+      m_vectorMag = (Real)it->second.get<double>();
+    }
+    else if ( kwd == "vectorHeadRatio" ) {
+      picojson::array xarr = it->second.get<picojson::array>();
+      if ( xarr.size() < 2 ) continue;
+      m_vectorHeadRatio[0] = (Real)xarr[0].get<double>();
+      m_vectorHeadRatio[1] = (Real)xarr[1].get<double>();
+    }
+    else if ( kwd == "LUT" ) {
+      picojson::object lutObjs = it->second.get<picojson::object>();
+      if ( ! ParseLUT(this, lutObjs) ) {
+	continue;
+      }
+    }
+    else continue; // unknown keyword, ignore.
+  } // end of for(it)
+  
   return true;
 }
 
