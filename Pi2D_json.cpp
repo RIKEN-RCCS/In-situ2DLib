@@ -49,7 +49,7 @@ static bool ParseLUT(Pi2D* pi2d, picojson::object& lutObjs) {
       }
       else if ( kwd == "colorList" ) {
 	picojson::array xarr = lait->second.get<picojson::array>();
-	for ( int i = 0; i < xarr.size(); i++ ) {
+	for ( size_t i = 0; i < xarr.size(); i++ ) {
 	  picojson::array yarr = xarr[i].get<picojson::array>();
 	  if ( yarr.size() < 2 ) continue;
 	  Real val = (Real)yarr[0].get<double>();

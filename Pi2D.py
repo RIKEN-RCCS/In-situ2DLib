@@ -28,8 +28,8 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   nl = int(nlevel)
   if nl < 1: nl = 5
 
-  plt.tick_params(labelbottom='off', bottom='off')
-  plt.tick_params(labelleft='off', left='off')
+  plt.tick_params(labelbottom=False, bottom=False)
+  plt.tick_params(labelleft=False, left=False)
   plt.gca().spines['right'].set_visible(False)
   plt.gca().spines['left'].set_visible(False)
   plt.gca().spines['top'].set_visible(False)
@@ -94,8 +94,8 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   else:
     plt.axis(vp)
 
-  plt.tick_params(labelbottom='off', bottom='off')
-  plt.tick_params(labelleft='off', left='off')
+  plt.tick_params(labelbottom=False, bottom=False)
+  plt.tick_params(labelleft=False, left=False)
   plt.gca().spines['right'].set_visible(False)
   plt.gca().spines['left'].set_visible(False)
   plt.gca().spines['top'].set_visible(False)
