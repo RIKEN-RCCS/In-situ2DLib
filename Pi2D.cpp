@@ -91,14 +91,6 @@ Pi2D::Pi2D()
     PyErr_Print();
     return;
   }
-
-  // call python function
-  PyObject* pRet;
-  pRet = PyObject_CallFunctionObjArgs(pModule, NULL);
-  if ( ! pRet || PyErr_Occurred() ) {
-    PyErr_Print();
-    return;
-  }
 }
 
 Pi2D::~Pi2D()
