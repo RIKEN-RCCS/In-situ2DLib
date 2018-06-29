@@ -38,7 +38,7 @@ public:
   std::map<std::string, LUT> m_lutList;
   Real m_lineWidth;
   Real m_vectorMag;
-  Real m_vectorRatio[2];
+  Real m_vectorHeadRatio[2];
   size_t m_id;
 
 private:

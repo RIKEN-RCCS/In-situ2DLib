@@ -8,11 +8,11 @@
 #include "Pi2Ddefs.h"
 
 
-struct Color {
+struct color_s {
   float red;
   float green;
   float blue;
-  Color(const float r=1.f, const float g=1.f, const float b=1.f)
+  color_s(const float r=1.f, const float g=1.f, const float b=1.f)
     : red(r), green(g), blue(b) {}
 };
 
@@ -22,9 +22,9 @@ public:
   LUT();
   ~LUT();
 
-  Color ColorByValue(const float);
+  color_s ColorByValue(const float);
 
-  std::map<float, Color> colorList;
+  std::map<float, color_s> colorList;
   Real cbSize[2];
   Real cbPos[2];
   bool cbHoriz;

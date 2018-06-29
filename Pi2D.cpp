@@ -33,8 +33,8 @@ Pi2D::Pi2D()
   m_lutList.clear();
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
-  m_vectorRatio[0] = -1;
-  m_vectorRatio[1] = -1;
+  m_vectorHeadRatio[0] = -1.0;
+  m_vectorHeadRatio[1] = -1.0;
  
   pModule = NULL;
   pClass = NULL;
@@ -185,8 +185,8 @@ bool Pi2D::SetAttrib(const string arg)
     if ( n != 2 ) return false;
     if ( r0 != -1 && r0 < 0.0 ) return false;
     if ( r1 != -1 && r1 < 0.0 ) return false;
-    m_vectorRatio[0] = r0;
-    m_vectorRatio[1] = r1;
+    m_vectorHeadRatio[0] = r0;
+    m_vectorHeadRatio[1] = r1;
   } else {
     //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
@@ -400,7 +400,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   Real vals[sz];
   Real clrs[sz][3];
   int cnt = 0;
-  map<float, Color>::iterator itr = lut.colorList.begin();
+  map<float, color_s>::iterator itr = lut.colorList.begin();
   while( itr != lut.colorList.end() ) {
     vals[cnt] = (*itr).first;
     clrs[cnt][0] = (*itr).second.red;
@@ -644,7 +644,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   // set vectorHeadRatio
   PyObject* pRatio =
       PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
-                                reinterpret_cast<void*>(m_vectorRatio));
+                                reinterpret_cast<void*>(m_vectorHeadRatio));
   if ( ! pRatio || PyErr_Occurred() ) {
     PyErr_Print();
     ret = false;
@@ -756,32 +756,4 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pProc ) Py_DECREF(pProc);
 
   return ret;
-}
-
-bool Pi2D::ImportAttrib(const string path)
-{
-  if ( path.empty() )
-    return false;
-
-  FILE *fp;
-  fp = fopen(path.c_str(), "r");
-  if ( ! fp )
-    return false;
-  fclose(fp);
-
-  return true;
-}
-
-bool Pi2D::ExportAttrib(const string path)
-{
-  if ( path.empty() )
-    return false;
-
-  FILE *fp;
-  fp = fopen(path.c_str(), "w");
-  if ( ! fp )
-    return false;
-  fclose(fp);
-
-  return true;
 }

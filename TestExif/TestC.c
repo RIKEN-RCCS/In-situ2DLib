@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
       data[M*j + i] = (i * 2.0 * pi / (M-1)) * (j * 2.0 * pi / (N-1));
 
   iret = pi2d_init();
-  iret = pi2d_setattrib("arraySize=[60,80]", 17);
+  iret = pi2d_setattrib("arraySize=80,60", 15);
   iret = pi2d_draws(0, data, "default", 7, 10, 0);
   iret = pi2d_output(0, 0, 0, 0);
   iret = pi2d_finalize();

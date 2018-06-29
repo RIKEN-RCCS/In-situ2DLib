@@ -4,7 +4,7 @@ using namespace std;
 
 LUT::LUT() : cbHoriz(false), cbNumTic(2)
 {
-  Color clr(1.0, 1.0, 1.0);
+  color_s clr(1.0, 1.0, 1.0);
   colorList[0.0] = clr;
   cbSize[0] = 0.05; cbSize[1] = 0.5;
   cbPos[0] = 0.0; cbPos[1] = 0.0;
@@ -15,16 +15,16 @@ LUT::~LUT()
 {
 }
 
-Color LUT::ColorByValue(const float val)
+color_s LUT::ColorByValue(const float val)
 {
-  Color clr;
+  color_s clr;
 
-  map<float, Color>::iterator itr;
+  map<float, color_s>::iterator itr;
   itr = colorList.begin();
   if ( val < (*itr).first )
     return (*itr).second;
   float bfval = (*itr).first;
-  Color bfclr = (*itr).second;
+  color_s bfclr = (*itr).second;
   for ( ; itr != colorList.end(); itr++ ) {
     if ( val <= (*itr).first ) {
       float df = (*itr).first - val;
