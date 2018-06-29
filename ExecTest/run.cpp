@@ -32,7 +32,7 @@ int main()
 
   //printf("dbg0\n");
   LUT* lut1 = new LUT();
-  Color clr0(0.0, 0.0, 1.0);
+  color_s clr0(0.0, 0.0, 1.0);
   lut1->colorList[1.0] = clr0;
   //printf("dbg1\n");
   if ( ! pi0->SetLUT("LUT_B", lut1) )
