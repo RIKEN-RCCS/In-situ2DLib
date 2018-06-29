@@ -25,6 +25,9 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   else:
     plt.axis(vp)
 
+  nl = int(nlevel)
+  if nl < 1: nl = 5
+
   plt.tick_params(labelbottom='off', bottom='off')
   plt.tick_params(labelleft='off', left='off')
   plt.gca().spines['right'].set_visible(False)
@@ -55,15 +58,15 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     if ( vt == 0 ):
-      cont = plt.contourf(x, y, z, nlevel, cmap=_cmap)
+      cont = plt.contourf(x, y, z, nl, cmap=_cmap)
     elif ( vt == 1 ):
-      cont = plt.contour(x, y, z, nlevel, cmap=_cmap, linewidths=lwidth)
+      cont = plt.contour(x, y, z, nl, cmap=_cmap, linewidths=lwidth)
   else:
     #print("empty coord")
     if ( vt == 0 ):
-      cont = plt.contourf(z, nlevel, cmap=_cmap)
+      cont = plt.contourf(z, nl, cmap=_cmap)
     elif ( vt == 1 ):
-      cont = plt.contour(z, nlevel, cmap=_cmap, linewidths=lwidth)
+      cont = plt.contour(z, nl, cmap=_cmap, linewidths=lwidth)
 
   if ( cbShow ):
     #pass

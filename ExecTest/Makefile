@@ -11,4 +11,4 @@ run : run.o ../libPi2D.a
 	$(CXX) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -rf *.o *.pyc run
+	rm -rf *.o *.pyc run out*.png __pycache__
