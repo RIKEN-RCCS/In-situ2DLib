@@ -33,6 +33,8 @@ Pi2D::Pi2D()
   m_lutList.clear();
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
+  m_vectorRatio[0] = -1;
+  m_vectorRatio[1] = -1;
  
   pModule = NULL;
   pClass = NULL;
@@ -142,21 +144,21 @@ bool Pi2D::SetAttrib(const string arg)
 
   if ( attr == "imageSize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "[%d, %d]", &w, &h);
+    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
     if ( n != 2 ) return false;
     if ( w < 0 || h < 0 ) return false;
     m_imageSz[0] = w;
     m_imageSz[1] = h;
   } else if ( attr == "arraySize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "[%d, %d]", &w, &h);
+    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
     if ( n != 2 ) return false;
     if ( w < 0 || h < 0 ) return false;
     m_arraySz[0] = w;
     m_arraySz[1] = h;
   } else if ( attr == "viewport" ) {
     Real x0, x1, y0, y1;
-    int n = sscanf(vals.c_str(), "[%f, %f, %f, %f]", &x0, &x1, &y0, &y1);
+    int n = sscanf(vals.c_str(), "%f, %f, %f, %f", &x0, &x1, &y0, &y1);
     if ( n != 4 ) return false;
     m_viewPort[0] = x0;
     m_viewPort[1] = x1;
@@ -177,6 +179,14 @@ bool Pi2D::SetAttrib(const string arg)
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
     m_vectorMag = v;
+  } else if ( attr == "vectorHeadRatio" ) {
+    Real r0, r1;
+    int n = sscanf(vals.c_str(), "%f, %f", &r0, &r1);
+    if ( n != 2 ) return false;
+    if ( r0 != -1 && r0 < 0.0 ) return false;
+    if ( r1 != -1 && r1 < 0.0 ) return false;
+    m_vectorRatio[0] = r0;
+    m_vectorRatio[1] = r1;
   } else {
     //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
@@ -246,7 +256,12 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
                  const string lutname, const int nlevels,
                  bool cbShow)
 {
+  int sz;
+
   bool ret = true;
+
+  long int dims2[1] = {2};
+  long int dims4[1] = {4};
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -256,9 +271,8 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   }
 
   // set ImageSize
-  long int idims[1] = {2};
   npy_intp imgsz[2] = {m_imageSz[0], m_imageSz[1]};
-  PyObject *pImgSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pImgSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(imgsz));
   if ( ! pImgSz || PyErr_Occurred() ) {
     PyErr_Print();
@@ -267,7 +281,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
 
   // set ArraySize
   npy_intp arrsz[2] = {m_arraySz[1], m_arraySz[0]};
-  PyObject *pArrSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pArrSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(arrsz));
   if ( ! pArrSz || PyErr_Occurred() ) {
     PyErr_Print();
@@ -275,9 +289,8 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   }
 
   // set viewPort
-  long int vdims[1] = {4};
   PyObject* pVP =
-      PyArray_SimpleNewFromData(1, vdims, NPY_REAL,
+      PyArray_SimpleNewFromData(1, dims4, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
     PyErr_Print();
@@ -304,7 +317,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
 
   // set vecid
   npy_intp vid[2] = {m_vecid[0],  m_vecid[1]};
-  PyObject *pVid = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pVid = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vid));
   if ( ! pVid || PyErr_Occurred() ) {
     PyErr_Print();
@@ -314,7 +327,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   // set coord
   PyObject* pCoord;
   if ( m_coord ) {
-    int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
+    sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
     pCoord =
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
@@ -378,13 +391,79 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
+  //printf("dbg A\n");
+  LUT lut = m_lutList[lutname];
+  //printf("dbg B\n");
+
+  // set Color
+  sz = lut.colorList.size();
+  Real vals[sz];
+  Real clrs[sz][3];
+  int cnt = 0;
+  map<float, Color>::iterator itr = lut.colorList.begin();
+  while( itr != lut.colorList.end() ) {
+    vals[cnt] = (*itr).first;
+    clrs[cnt][0] = (*itr).second.red;
+    clrs[cnt][1] = (*itr).second.green;
+    clrs[cnt][2] = (*itr).second.blue;
+    cnt++;
+    ++itr;
+  }
+  npy_intp clr_dims1[1] = {sz};
+  npy_intp clr_dims2[2] = {sz, 3};
+  PyObject* pClrPos =
+      PyArray_SimpleNewFromData(1, clr_dims1, NPY_REAL, (void*)vals);
+  if ( ! pClrPos || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+  PyObject* pClr =
+      PyArray_SimpleNewFromData(2, clr_dims2, NPY_REAL, (void*)clrs);
+  if ( ! pClr || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set cbSize
+  PyObject* pCbSz =
+      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                reinterpret_cast<void*>(lut.cbSize));
+  if ( ! pCbSz || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set cbPos
+  PyObject* pCbPos =
+      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                reinterpret_cast<void*>(lut.cbPos));
+  if ( ! pCbPos || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set cbHoriz
+  PyObject* pCbHrz;
+  if ( lut.cbHoriz )
+    pCbHrz = Py_True;
+  else
+    pCbHrz = Py_False;
+
+  // set cbNumTic
+  PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
+  if ( ! pCbTic || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
   // call python function
   PyObject* pRet;
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawS, pClass,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
-                   pCtype, pZarr, pLut, pNlevel, pShow,
-                   pWidth, NULL);
+                   pCtype, pZarr, pLut, pNlevel, pShow, pWidth,
+                   pClrPos, pClr, pCbSz, pCbPos, pCbHrz, pCbTic,
+                   NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       PyErr_Print();
       ret = false;
@@ -404,6 +483,13 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   if ( pLut ) Py_DECREF(pLut);
   if ( pNlevel ) Py_DECREF(pNlevel);
   if ( pWidth ) Py_DECREF(pWidth);
+  if ( pShow ) Py_DECREF(pShow);
+  if ( pClrPos ) Py_DECREF(pClrPos);
+  if ( pClr ) Py_DECREF(pClr);
+  if ( pCbSz ) Py_DECREF(pCbSz);
+  if ( pCbPos ) Py_DECREF(pCbPos);
+  if ( pCbHrz ) Py_DECREF(pCbHrz);
+  if ( pCbTic ) Py_DECREF(pCbTic);
 
   return ret;
 }
@@ -421,7 +507,12 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
     m_vecid_v[1] = 1;
   }
 
+  int sz;
+
   bool ret = true;
+
+  long int dims2[1] = {2};
+  long int dims4[1] = {4};
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -431,9 +522,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   }
 
   // set ImageSize
-  long int idims[1] = {2};
   npy_intp imgsz[2] = {m_imageSz[0], m_imageSz[1]};
-  PyObject *pImgSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pImgSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(imgsz));
   if ( ! pImgSz || PyErr_Occurred() ) {
     PyErr_Print();
@@ -442,7 +532,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 
   // set ArraySize
   npy_intp arrsz[2] = {m_arraySz[1], m_arraySz[0]};
-  PyObject *pArrSz = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pArrSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(arrsz));
   if ( ! pArrSz || PyErr_Occurred() ) {
     PyErr_Print();
@@ -450,9 +540,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   }
 
   // set viewPort
-  long int vdims[1] = {4};
   PyObject* pVP =
-      PyArray_SimpleNewFromData(1, vdims, NPY_REAL,
+      PyArray_SimpleNewFromData(1, dims4, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
     PyErr_Print();
@@ -468,7 +557,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 
   // set vecid
   npy_intp vid[2] = {m_vecid[0],  m_vecid[1]};
-  PyObject *pVid = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pVid = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vid));
   if ( ! pVid || PyErr_Occurred() ) {
     PyErr_Print();
@@ -478,7 +567,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   // set coord
   PyObject* pCoord;
   if ( m_coord ) {
-    int sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
+    sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
     pCoord =
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
@@ -494,7 +583,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   }
 
   // set data
-  int sz = m_arraySz[0] * m_arraySz[1] * m_veclen_v;
+  sz = m_arraySz[0] * m_arraySz[1] * m_veclen_v;
   long int cdims[1] = {sz};
   PyObject* pVal =
       PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(data));
@@ -538,9 +627,25 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 
   // set vecid
   npy_intp vvid[2] = {m_vecid_v[0], m_vecid_v[1]};
-  PyObject *pVidV = PyArray_SimpleNewFromData(1, idims, NPY_LONG,
+  PyObject *pVidV = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vvid));
   if ( ! pVidV || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set vectorMag
+  PyObject* pMag = PyFloat_FromDouble((double)m_vectorMag);
+  if ( ! pMag || PyErr_Occurred() ) {
+    PyErr_Print();
+    ret = false;
+  }
+
+  // set vectorHeadRatio
+  PyObject* pRatio =
+      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                reinterpret_cast<void*>(m_vectorRatio));
+  if ( ! pRatio || PyErr_Occurred() ) {
     PyErr_Print();
     ret = false;
   }
@@ -550,7 +655,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawV, pClass,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
-                   pVal, pVlenV, pVidV, pLut, pShow, pWidth, NULL);
+                   pVal, pVlenV, pVidV, pLut, pShow, pWidth,
+                   pMag, pRatio, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       PyErr_Print();
       ret = false;
@@ -569,6 +675,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( pVidV ) Py_DECREF(pVidV);
   if ( pLut ) Py_DECREF(pLut);
   if ( pWidth ) Py_DECREF(pWidth);
+  if ( pMag ) Py_DECREF(pMag);
+  if ( pRatio ) Py_DECREF(pRatio);
 
   return ret;
 }
