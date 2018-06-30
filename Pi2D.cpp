@@ -17,6 +17,8 @@ int NPY_REAL = NPY_FLOAT;
 using namespace std;
 
 size_t Pi2D::s_id = 0;
+bool Pi2D::s_debugprint = true;
+
 
 Pi2D::Pi2D()
 {
@@ -43,15 +45,19 @@ Pi2D::Pi2D()
   pFuncOut = NULL;
 
   if ( s_id == 0 ) {
-    setenv("PYTHONPATH", ".", 0);
     Py_Initialize();
     init_numpy();
+    if ( s_debugprint && PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+    }
 
-    string cmd("#!/usr/bin/env python\n");
-    cmd += "# -*- coding: utf-8 -*-\n";
+    string cmd;
     cmd += "from __future__ import print_function\n";
+    cmd += "import sys; sys.path.append('.')\n";
     PyRun_SimpleString(cmd.c_str());
-
+    if ( s_debugprint && PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+    }
     cmd = "import matplotlib\n";
     cmd += "matplotlib.use('Agg')\n";
     cmd += "import numpy as np\n";
@@ -59,6 +65,9 @@ Pi2D::Pi2D()
     cmd += "import matplotlib.pyplot as plt\n";
     cmd += "from matplotlib.colors import LinearSegmentedColormap\n";
     PyRun_SimpleString(cmd.c_str());
+    if ( s_debugprint && PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+    }
   }
 
   m_id = s_id;
@@ -66,7 +75,7 @@ Pi2D::Pi2D()
 
   pModule = PyImport_ImportModule("Pi2D");
   if ( ! pModule || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     return;
   }
 /*
@@ -78,17 +87,17 @@ Pi2D::Pi2D()
 */
   pFuncDrawS = PyObject_GetAttrString(pModule, "DrawS");
   if ( ! pFuncDrawS || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     return;
   }
   pFuncDrawV = PyObject_GetAttrString(pModule, "DrawV");
   if ( ! pFuncDrawV || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     return;
   }
   pFuncOut = PyObject_GetAttrString(pModule, "Output");
   if ( ! pFuncOut || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     return;
   }
 }
@@ -260,7 +269,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
   if ( ! pId || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -269,7 +278,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   PyObject *pImgSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(imgsz));
   if ( ! pImgSz || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -278,7 +287,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   PyObject *pArrSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(arrsz));
   if ( ! pArrSz || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -287,7 +296,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
       PyArray_SimpleNewFromData(1, dims4, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -298,14 +307,14 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   else if ( vt == ContourLine )
     pCtype = PyLong_FromLong(1);
   if ( ! pCtype || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set veclen
   PyObject* pVlen = PyLong_FromLong(m_veclen);
   if ( ! pVlen || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -314,7 +323,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   PyObject *pVid = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vid));
   if ( ! pVid || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -332,7 +341,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
   if ( ! pCoord || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -341,7 +350,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   PyObject* pZarr =
       PyArray_SimpleNewFromData(2, z_dims, NPY_REAL, (void*)(data));
   if ( ! pZarr || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -353,14 +362,14 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   pLut = PyString_FromString(lutname.c_str());
 #endif
   if ( ! pLut || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set nlevels
   PyObject* pNlevel = PyLong_FromLong(nlevels);
   if ( ! pNlevel || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -374,7 +383,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   // set lineWidth
   PyObject* pWidth = PyFloat_FromDouble((double)m_lineWidth);
   if ( ! pWidth || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -401,13 +410,13 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   PyObject* pClrPos =
       PyArray_SimpleNewFromData(1, clr_dims1, NPY_REAL, (void*)vals);
   if ( ! pClrPos || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
   PyObject* pClr =
       PyArray_SimpleNewFromData(2, clr_dims2, NPY_REAL, (void*)clrs);
   if ( ! pClr || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -416,7 +425,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
       PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
                                 reinterpret_cast<void*>(lut.cbSize));
   if ( ! pCbSz || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -425,7 +434,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
       PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
                                 reinterpret_cast<void*>(lut.cbPos));
   if ( ! pCbPos || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -439,7 +448,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   // set cbNumTic
   PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
   if ( ! pCbTic || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -452,7 +461,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
                    pClrPos, pClr, pCbSz, pCbPos, pCbHrz, pCbTic,
                    NULL);
     if ( ! pRet || PyErr_Occurred() ) {
-      PyErr_Print();
+      if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
   }
@@ -504,7 +513,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
   if ( ! pId || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -513,7 +522,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   PyObject *pImgSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(imgsz));
   if ( ! pImgSz || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -522,7 +531,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   PyObject *pArrSz = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(arrsz));
   if ( ! pArrSz || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -531,14 +540,14 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
       PyArray_SimpleNewFromData(1, dims4, NPY_REAL,
                                 reinterpret_cast<void*>(m_viewPort));
   if ( ! pVP || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set veclen
   PyObject* pVlen = PyLong_FromLong(m_veclen);
   if ( ! pVlen || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -547,7 +556,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   PyObject *pVid = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vid));
   if ( ! pVid || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -565,7 +574,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
   if ( ! pCoord || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -575,7 +584,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   PyObject* pVal =
       PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(data));
   if ( ! pVal || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -587,7 +596,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   pLut = PyString_FromString(lutname.c_str());
 #endif
   if ( ! pLut || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -601,14 +610,14 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   // set lineWidth
   PyObject* pWidth = PyFloat_FromDouble((double)m_lineWidth);
   if ( ! pWidth || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set veclen
   PyObject* pVlenV = PyLong_FromLong(m_veclen_v);
   if ( ! pVlenV || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -617,14 +626,14 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   PyObject *pVidV = PyArray_SimpleNewFromData(1, dims2, NPY_LONG,
                          reinterpret_cast<void*>(vvid));
   if ( ! pVidV || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set vectorMag
   PyObject* pMag = PyFloat_FromDouble((double)m_vectorMag);
   if ( ! pMag || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -633,7 +642,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
       PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
                                 reinterpret_cast<void*>(m_vectorHeadRatio));
   if ( ! pRatio || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -645,7 +654,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
                    pVal, pVlenV, pVidV, pLut, pShow, pWidth,
                    pMag, pRatio, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
-      PyErr_Print();
+      if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
   }
@@ -689,7 +698,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
   if ( ! pId || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -700,35 +709,35 @@ bool Pi2D::Output(const int step, const int row, const int col,
   pOutName = PyString_FromString(m_outputPtn.c_str());
 #endif
   if ( ! pOutName || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set step
   PyObject* pStep = PyLong_FromLong(step);
   if ( ! pStep || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set row
   PyObject* pRow = PyLong_FromLong(row);
   if ( ! pRow || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set col
   PyObject* pCol = PyLong_FromLong(col);
   if ( ! pCol || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
   // set proc
   PyObject* pProc = PyLong_FromLong(proc);
   if ( ! pProc || PyErr_Occurred() ) {
-    PyErr_Print();
+    if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
 
@@ -737,7 +746,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
     PyObject* pRet = PyObject_CallFunctionObjArgs(pFuncOut,
                          pId, pOutName, pStep, pRow, pCol, pProc, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
-      PyErr_Print();
+      if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
   }

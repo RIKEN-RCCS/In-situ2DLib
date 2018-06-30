@@ -14,6 +14,7 @@
 class Pi2D {
 public:
   static size_t s_id;
+  static bool s_debugprint;
 
   Pi2D();
   ~Pi2D();
