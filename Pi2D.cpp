@@ -1,6 +1,7 @@
 #include "Pi2D.h"
 //#include <Python.h>
 #include "numpy/arrayobject.h"
+#include <complex>
 
 #if PY_MAJOR_VERSION >= 3
 int init_numpy() {import_array();}
@@ -329,6 +330,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
 
   // set coord
   PyObject* pCoord;
+  Real null_coord[1] = {0.0};
   if ( m_coord ) {
     sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
@@ -336,7 +338,6 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
   } else {
     long int cdims[1] = {1};
-    Real null_coord[1] = {0.0};
     pCoord =
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
@@ -387,9 +388,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
-  //printf("dbg A\n");
   LUT lut = m_lutList[lutname];
-  //printf("dbg B\n");
 
   // set Color
   sz = lut.colorList.size();
@@ -562,6 +561,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 
   // set coord
   PyObject* pCoord;
+  Real null_coord[1] = {0.0};
   if ( m_coord ) {
     sz = m_arraySz[0] * m_arraySz[1] * m_veclen;
     long int cdims[1] = {sz};
@@ -569,7 +569,6 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(m_coord));
   } else {
     long int cdims[1] = {1};
-    Real null_coord[1] = {0.0};
     pCoord =
         PyArray_SimpleNewFromData(1, cdims, NPY_REAL, (void*)(null_coord));
   }
@@ -646,13 +645,136 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
     ret = false;
   }
 
+  LUT lut = m_lutList[lutname];
+
+  // set color list
+  PyObject* pClrList;
+  sz = m_arraySz[0] * m_arraySz[1];
+  Real clist[sz][4];
+  Real clist_1[1][4];
+  if ( colid == -2 ) {
+    clist_1[0][0] = 1.0;
+    clist_1[0][1] = 1.0;
+    clist_1[0][2] = 1.0;
+    clist_1[0][3] = 1.0;
+    npy_intp clr_dims0[2] = {1, 4};
+    pClrList =
+        PyArray_SimpleNewFromData(2, clr_dims0, NPY_REAL, (void*)clist_1);
+  } else {
+    if ( lut.colorList.size() == 1 ) {
+      map<float, color_s>::iterator citr = lut.colorList.begin();
+      clist_1[0][0] = (*citr).second.red;
+      clist_1[0][1] = (*citr).second.green;
+      clist_1[0][2] = (*citr).second.blue;
+      clist_1[0][3] = 1.0;
+      npy_intp clr_dims0[2] = {1, 4};
+      pClrList =
+          PyArray_SimpleNewFromData(2, clr_dims0, NPY_REAL, (void*)clist_1);
+    } else {
+      sz = m_arraySz[0] * m_arraySz[1];
+      Real vmax = 0.0;
+      Real v[sz];
+      if ( colid > -1 ) {
+        for ( int i = 0; i < sz; i++ ) {
+          v[i] = data[i*m_veclen_v+colid];
+          if ( v[i] > vmax ) vmax = v[i];
+        }
+      } else {
+        for ( int i = 0; i < sz; i++ ) {
+          Real v1 = data[i*m_veclen_v+m_vecid_v[0]];
+          Real v2 = data[i*m_veclen_v+m_vecid_v[1]];
+          complex<double> c((double)v1, (double)v2);
+          v[i] = (Real)abs(c);
+          if ( v[i] > vmax ) vmax = v[i];
+        }
+      }
+      for ( int i = 0; i < sz; i++ ) {
+        color_s clr = lut.ColorByValue(v[i]/vmax);
+        clist[i][0] = clr.red;
+        clist[i][1] = clr.green;
+        clist[i][2] = clr.blue;
+        clist[i][3] = 1.0;
+      }
+      npy_intp clr_dims0[2] = {sz, 4};
+      pClrList =
+          PyArray_SimpleNewFromData(2, clr_dims0, NPY_REAL, (void*)clist);
+    }
+  }
+  if ( ! pClrList || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
+  // set Color
+  sz = lut.colorList.size();
+  Real vals[sz];
+  Real clrs[sz][3];
+  int cnt = 0;
+  map<float, color_s>::iterator itr = lut.colorList.begin();
+  while( itr != lut.colorList.end() ) {
+    vals[cnt] = (*itr).first;
+    clrs[cnt][0] = (*itr).second.red;
+    clrs[cnt][1] = (*itr).second.green;
+    clrs[cnt][2] = (*itr).second.blue;
+    cnt++;
+    ++itr;
+  }
+  npy_intp clr_dims1[1] = {sz};
+  npy_intp clr_dims2[2] = {sz, 3};
+  PyObject* pClrPos =
+      PyArray_SimpleNewFromData(1, clr_dims1, NPY_REAL, (void*)vals);
+  if ( ! pClrPos || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+  PyObject* pClr =
+      PyArray_SimpleNewFromData(2, clr_dims2, NPY_REAL, (void*)clrs);
+  if ( ! pClr || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
+  // set cbSize
+  PyObject* pCbSz =
+      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                reinterpret_cast<void*>(lut.cbSize));
+  if ( ! pCbSz || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
+  // set cbPos
+  PyObject* pCbPos =
+      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                reinterpret_cast<void*>(lut.cbPos));
+  if ( ! pCbPos || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
+  // set cbHoriz
+  PyObject* pCbHrz;
+  if ( lut.cbHoriz )
+    pCbHrz = Py_True;
+  else
+    pCbHrz = Py_False;
+
+  // set cbNumTic
+  PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
+  if ( ! pCbTic || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
   // call python function
   PyObject* pRet;
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawV,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
                    pVal, pVlenV, pVidV, pLut, pShow, pWidth,
-                   pMag, pRatio, NULL);
+                   pMag, pRatio, pClrList,
+                   pClrPos, pClr, pCbSz, pCbPos, pCbHrz, pCbTic,
+                   NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       if ( s_debugprint ) PyErr_Print();
       ret = false;
@@ -673,6 +795,13 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( pWidth ) Py_DECREF(pWidth);
   if ( pMag ) Py_DECREF(pMag);
   if ( pRatio ) Py_DECREF(pRatio);
+  if ( pClrList ) Py_DECREF(pClrList);
+  if ( pClrPos ) Py_DECREF(pClrPos);
+  if ( pClr ) Py_DECREF(pClr);
+  if ( pCbSz ) Py_DECREF(pCbSz);
+  if ( pCbPos ) Py_DECREF(pCbPos);
+  if ( pCbHrz ) Py_DECREF(pCbHrz);
+  if ( pCbTic ) Py_DECREF(pCbTic);
 
   return ret;
 }

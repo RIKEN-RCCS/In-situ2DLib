@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -9,7 +10,7 @@ g_fig_list = set()
 
 def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
           vt, z, lut, nlevel, cbShow, lwidth, clrPos, clrs,
-          cbPos, cbSz, cbHrz, cbTic):
+          cbSz, cbPos, cbHrz, cbTic):
   global g_fig_list
   _dpi = 100
   if ( mid in g_fig_list ):
@@ -18,6 +19,10 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     x = imgSz[0] / 100.0
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
+    # set as no margin
+    _pad = -0.22 * (100.0 / _dpi)
+    plt.tight_layout(pad=_pad)
+    # add id to global set variable
     g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
@@ -25,11 +30,8 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   else:
     plt.axis(vp)
 
-  nl = int(nlevel)
-  if nl < 1: nl = 5
-
-  plt.tick_params(labelbottom=False, bottom=False)
-  plt.tick_params(labelleft=False, left=False)
+  plt.tick_params(labelbottom='off', bottom='off')
+  plt.tick_params(labelleft='off', left='off')
   plt.gca().spines['right'].set_visible(False)
   plt.gca().spines['left'].set_visible(False)
   plt.gca().spines['top'].set_visible(False)
@@ -58,18 +60,16 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     if ( vt == 0 ):
-      cont = plt.contourf(x, y, z, nl, cmap=_cmap)
+      cont = plt.contourf(x, y, z, nlevel, cmap=_cmap)
     elif ( vt == 1 ):
-      cont = plt.contour(x, y, z, nl, cmap=_cmap, linewidths=lwidth)
-  else:
-    #print("empty coord")
+      cont = plt.contour(x, y, z, nlevel, cmap=_cmap, linewidths=lwidth)
+  else:    # empty coord
     if ( vt == 0 ):
-      cont = plt.contourf(z, nl, cmap=_cmap)
+      cont = plt.contourf(z, nlevel, cmap=_cmap)
     elif ( vt == 1 ):
-      cont = plt.contour(z, nl, cmap=_cmap, linewidths=lwidth)
+      cont = plt.contour(z, nlevel, cmap=_cmap, linewidths=lwidth)
 
   if ( cbShow ):
-    #pass
     cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
     if ( cbHrz ):
       plt.colorbar(cont, cax, orientation='horizontal')
@@ -79,7 +79,10 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   return True
 
 def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
-          vals, vlen, vid, lut, cbShow, lwidth, vmag, vratio):
+          vals, vlen, vid, lut, cbShow, lwidth, vmag, vratio,
+          clist, clrPos, clrs, cbSz, cbPos, cbHrz, cbTi):
+  #import pdb; pdb.set_trace()
+
   global g_fig_list
   _dpi = 100
   if ( mid in g_fig_list ):
@@ -88,30 +91,34 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     x = imgSz[0] / 100.0
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
+    # set as no margin
+    _pad = -0.22 * (100.0 / _dpi)
+    plt.tight_layout(pad=_pad)
+    # add id to global set variable
+    g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
     pass
   else:
     plt.axis(vp)
 
-  plt.tick_params(labelbottom=False, bottom=False)
-  plt.tick_params(labelleft=False, left=False)
+  plt.tick_params(labelbottom='off', bottom='off')
+  plt.tick_params(labelleft='off', left='off')
   plt.gca().spines['right'].set_visible(False)
   plt.gca().spines['left'].set_visible(False)
   plt.gca().spines['top'].set_visible(False)
   plt.gca().spines['bottom'].set_visible(False)
 
-  _pad = -0.22 * (100.0 / _dpi)
-  plt.tight_layout(pad=_pad)
+  #_pad = -0.22 * (100.0 / _dpi)
+  #plt.tight_layout(pad=_pad)
 
   if ( len(lut) == 0 ):
     _cmap = None
   else:
-    #_cmap = lut
-    _cmap = None
-
-  if ( cbShow ):
-    pass
+    clrlist = []
+    for pos, clr in zip(clrPos, clrs):
+      clrlist.append((pos, clr))
+    _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
 
   csz = arrSz[0] * arrSz[1];
   val0 = vals.reshape(csz, vlen)
@@ -138,12 +145,23 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y0 = coord0[:, [vecid[1]]]
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
-    #plt.quiver(x, y, u, v, angles='xy', scale_units='xy', scale=1, color=clist)
-    plt.quiver(x, y, u, v, angles='xy', scale_units='xy',
+    plt.quiver(x, y, u, v, angles='xy', scale_units='xy', color=clist,
                scale=_scale, headwidth=wid, headlength=leng)
   else:
     plt.quiver(u, v, angles='xy', scale_units='xy',
                scale=_scale, headwidth=wid, headlength=leng)
+
+  if ( cbShow ):
+    #pass
+    cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
+    if ( cbHrz ):
+      #plt.colorbar(cont, cax, orientation='horizontal')
+      plt.colorbar.ColorbarBase(cax, cmap=_cmap,
+                                orientation='horizontal')
+    else:
+      #plt.colorbar(cont, cax, orientation='vertical')
+      mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
+                                orientation='vertical')
 
   return True
 
