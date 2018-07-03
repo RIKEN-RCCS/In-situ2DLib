@@ -36,11 +36,13 @@ $(TARGET): $(OBJS)
 
 install : $(TARGET)
 	$(INSTALL) -d $(PI2D_DIR)
+	$(INSTALL) -d $(PI2D_DIR)/bin
 	$(INSTALL) -d $(PI2D_DIR)/lib
 	$(INSTALL) -d $(PI2D_DIR)/include
 	$(INSTALL) -t $(PI2D_DIR)/include $(HEADERS)
 	$(INSTALL) -t $(PI2D_DIR)/lib $(TARGET)
-	$(INSTALL) -t $(PI2D_DIR) Pi2D.py $(LICENCES)
+	$(INSTALL) -t $(PI2D_DIR)/bin Pi2D-config
+	$(INSTALL) -m 644 -t $(PI2D_DIR) Pi2D.py $(LICENCES)
 
 clean:
 	$(RM) $(OBJS) $(TARGET)
