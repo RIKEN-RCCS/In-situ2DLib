@@ -4,6 +4,7 @@
 int main()
 {
   Pi2D* pi0 = new Pi2D();
+  Pi2D* pi1 = new Pi2D();
 
   bool res = true;
 
@@ -11,13 +12,13 @@ int main()
     printf("error: etAttribute\n");
   if ( ! pi0->SetAttrib("arraySize=40, 20") )
     printf("error: SetAttrib\n");
-  if ( ! pi0->SetAttrib("viewport=-0.5, 40.5, -1.0, 20.2") )
-    printf("error: SetAttrib\n");
+  //if ( ! pi0->SetAttrib("viewport=-0.5, 40.5, -1.0, 20.2") )
+  //  printf("error: SetAttrib\n");
   if ( ! pi0->SetAttrib("outfilePat=./out_%S0%R1%C2%P3.png") )
     printf("error: SetAttrib\n");
   if ( ! pi0->SetAttrib("lineWidth=1.5") )
     printf("error: SetAttrib\n");
-  if ( ! pi0->SetAttrib("vectorMag=2.1") )
+  if ( ! pi0->SetAttrib("vectorMag=0.5") )
     printf("error: SetAttrib\n");
 
   if ( res ) {
@@ -30,14 +31,31 @@ int main()
     printf("vectorMag: %f\n", pi0->m_vectorMag);
   }
 
-  //printf("dbg0\n");
-  LUT* lut1 = new LUT();
+  if ( ! pi1->SetAttrib("imageSize=640, 640") )
+    printf("error: etAttribute\n");
+  if ( ! pi1->SetAttrib("arraySize=40, 20") )
+    printf("error: SetAttrib\n");
+  if ( ! pi1->SetAttrib("outfilePat=./out1_%S5.png") )
+    printf("error: SetAttrib\n");
+
+  LUT* lut0 = new LUT();
   color_s clr0(0.0, 0.0, 1.0);
-  lut1->colorList[1.0] = clr0;
-  //printf("dbg1\n");
-  if ( ! pi0->SetLUT("LUT_B", lut1) )
+  lut0->colorList[1.0] = clr0;
+  lut0->cbPos[0] = 0.1;
+  lut0->cbPos[1] = 0.1;
+  lut0->cbSize[0] = 0.8;
+  lut0->cbSize[1] = 0.1;
+  lut0->cbHoriz = true;
+  if ( ! pi0->SetLUT("LUT_B", lut0) )
     printf("error: SetLUT\n");
-  //printf("dbg2\n");
+
+  LUT* lut1 = new LUT();
+  color_s clr2(0.0, 1.0, 0.0);
+  lut1->colorList[0.5] = clr2;
+  color_s clr1(1.0, 1.0, 0.0);
+  lut1->colorList[1.0] = clr1;
+  if ( ! pi0->SetLUT("LUT_Y", lut1) )
+    printf("error: SetLUT\n");
 
   int i, j;
   int n;
@@ -60,7 +78,13 @@ int main()
     }
   } 
 
-  if ( ! pi0->DrawS(ColorContour, z_arr, "", 20) )
+  if ( ! pi0->DrawS(ColorContour, z_arr, "LUT_B", 20, false) )
+    printf("error: draw contour(f)\n");
+
+  if ( ! pi1->SetCoord(c_arr, 2, vid) )
+    printf("error: SetCoord\n");
+
+  if ( ! pi1->DrawS(ContourLine, z_arr) )
     printf("error: draw contour(f)\n");
 
   Real* v_arr = new Real[40 * 20 * 2];
@@ -72,14 +96,19 @@ int main()
     }
   }
 
-  if ( ! pi0->DrawV(v_arr) )
+  //int vid[2] = {0, 1};
+  if ( ! pi0->DrawV(v_arr, 2, vid, "LUT_Y", 0, true) )
     printf("error: draw vector\n");
 
   if ( ! pi0->Output(1, 22, 3, 4) )
     printf("error: save\n");
 
+  if ( ! pi1->Output(8, 0, 0, 0) )
+    printf("error: save\n");
+
   delete[] c_arr;
   delete[] z_arr;
+  delete lut0;
   delete lut1;
   //delete pi0;
 }
