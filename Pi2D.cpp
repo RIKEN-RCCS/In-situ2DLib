@@ -38,9 +38,10 @@ Pi2D::Pi2D()
   m_vectorMag = 1.0;
   m_vectorHeadRatio[0] = -1.0;
   m_vectorHeadRatio[1] = -1.0;
+
+  m_registLut.clear();
  
   pModule = NULL;
-  //pClass = NULL;
   pFuncDrawS = NULL;
   pFuncDrawV = NULL;
   pFuncOut = NULL;
@@ -79,13 +80,6 @@ Pi2D::Pi2D()
     if ( s_debugprint ) PyErr_Print();
     return;
   }
-/*
-  pClass = PyObject_GetAttrString(pModule, "Pi2D");
-  if ( ! pClass || PyErr_Occurred() ) {
-    PyErr_Print();
-    return;
-  }
-*/
   pFuncDrawS = PyObject_GetAttrString(pModule, "DrawS");
   if ( ! pFuncDrawS || PyErr_Occurred() ) {
     if ( s_debugprint ) PyErr_Print();
@@ -107,13 +101,9 @@ Pi2D::~Pi2D()
 {
   if ( m_coord )
     delete[] m_coord;
-  //map<string, LUT>::iterator itr;
-  //for ( itr = m_lutList.begin(); itr != m_lutList.end(); itr++ ) {
-  //  LUT lut = (*itr).second;
-    //if ( *lut )
-      //delete &lut;
-  //}
+
   m_lutList.clear();
+  m_registLut.clear();
 
   // python  decref
   if ( pFuncDrawS )
@@ -122,8 +112,6 @@ Pi2D::~Pi2D()
     Py_DECREF(pFuncDrawV);
   if ( pFuncOut )
     Py_DECREF(pFuncOut);
-  //if ( pClass )
-  //  Py_DECREF(pClass);
   if ( pModule )
     Py_DECREF(pModule);
 }
@@ -267,6 +255,24 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   long int dims2[1] = {2};
   long int dims4[1] = {4};
 
+  LUT lut = m_lutList[lutname];
+/*
+  LUT *plut = NULL;
+  LUT lut;
+  if ( m_lutList.size() != 0 ) {
+    map<string, LUT>::iterator itr = m_lutList.find(lutname);
+    if ( itr != m_lutList.end() )
+      plut = &(itr->second);
+  }
+  if ( plut ) {
+    lut = m_lutList[lutname];
+    if ( cbShow )
+      m_registLut.insert(lutname);
+  } else {
+    return false;
+  }
+*/
+
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
   if ( ! pId || PyErr_Occurred() ) {
@@ -388,8 +394,6 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
-  LUT lut = m_lutList[lutname];
-
   // set Color
   sz = lut.colorList.size();
   Real vals[sz];
@@ -508,6 +512,24 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 
   long int dims2[1] = {2};
   long int dims4[1] = {4};
+
+  LUT lut = m_lutList[lutname];
+/*
+  LUT *plut = NULL;
+  LUT lut;
+  if ( m_lutList.size() != 0 ) {
+    map<string, LUT>::iterator itr = m_lutList.find(lutname);
+    if ( itr != m_lutList.end() )
+      plut = &(itr->second);
+  }
+  if ( plut ) {
+    lut = m_lutList[lutname];
+    if ( cbShow )
+      m_registLut.insert(lutname);
+  } else {
+    return false;
+  }
+*/
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -645,8 +667,6 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
     ret = false;
   }
 
-  LUT lut = m_lutList[lutname];
-
   // set color list
   PyObject* pClrList;
   sz = m_arraySz[0] * m_arraySz[1];
@@ -689,11 +709,14 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
         }
       }
       for ( int i = 0; i < sz; i++ ) {
-        color_s clr = lut.ColorByValue(v[i]/vmax);
+        //color_s clr = lut.ColorByValue(v[i]/vmax);
+        color_s clr = lut.ColorByValue(v[i]);
         clist[i][0] = clr.red;
         clist[i][1] = clr.green;
         clist[i][2] = clr.blue;
         clist[i][3] = 1.0;
+        //printf("dbg: v[%d] = %f, clr = [%f, %f, %f, %f]\n",
+        //       i, v[i], clist[i][0], clist[i][1], clist[i][2], clist[i][3]);
       }
       npy_intp clr_dims0[2] = {sz, 4};
       pClrList =
@@ -813,16 +836,12 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   bool ret = true;
 
-  /*
-  if ( step < 0 )
-    return false;
-  if ( row < 0 )
-    return false;
-  if ( col < 0 )
-    return false;
-  if ( proc < 0 )
-    return false;
-  */
+  set<string>::iterator itr = m_registLut.begin();
+  for ( ; itr != m_registLut.end(); itr++ ) {
+    string lutname = *itr;
+    LUT lut = m_lutList[lutname];
+    printf("dbg: lut = %s\n", lutname.c_str());
+  }
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -887,6 +906,9 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pRow ) Py_DECREF(pRow);
   if ( pCol ) Py_DECREF(pCol);
   if ( pProc ) Py_DECREF(pProc);
+
+  // clear set of LUT name;
+  m_registLut.clear();
 
   return ret;
 }

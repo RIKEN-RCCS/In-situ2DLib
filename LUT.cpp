@@ -8,7 +8,6 @@ LUT::LUT() : cbHoriz(false), cbNumTic(2)
   colorList[0.0] = clr;
   cbSize[0] = 0.05; cbSize[1] = 0.5;
   cbPos[0] = 0.0; cbPos[1] = 0.0;
-  //printf("LUT: setring\n");
 }
 
 LUT::~LUT()
