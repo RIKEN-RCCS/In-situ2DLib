@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <set>
 #include "LUT.h"
 #include <Python.h>
 
@@ -48,8 +49,9 @@ private:
   int m_veclen_v;
   int m_vecid_v[2];
 
+  std::set<std::string> m_registLut;
+
   PyObject *pModule;
-  PyObject *pClass;
   PyObject *pFuncDrawS;
   PyObject *pFuncDrawV;
   PyObject *pFuncOut;

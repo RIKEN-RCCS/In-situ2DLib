@@ -20,8 +20,8 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
     # set as no margin
-    _pad = -0.22 * (100.0 / _dpi)
-    plt.tight_layout(pad=_pad)
+    #_pad = -0.22 * (100.0 / _dpi)
+    #plt.tight_layout(pad=_pad)
     # add id to global set variable
     g_fig_list.add(mid)
 
@@ -44,11 +44,20 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 
   if ( len(lut) == 0 ):
     _cmap = None
+    _norm = None
   else:
+    cmin = min(clrPos)
+    cmax = max(clrPos)
+    crange = cmax - cmin
+    cposList = [0.0]
+    if ( crange != 0.0 ):
+      cposList = [((v - cmin) / crange) for v in clrPos]
     clrlist = []
-    for pos, clr in zip(clrPos, clrs):
-      clrlist.append((pos, clr))
+    #for pos, clr in zip(clrPos, clrs):
+    for cpos, clr in zip(cposList, clrs):
+      clrlist.append((cpos, clr))
     _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
+    _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
 
   if ( len(coord) != 1 ):
     csz = arrSz[0] * arrSz[1];
@@ -60,14 +69,16 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     if ( vt == 0 ):
-      cont = plt.contourf(x, y, z, nlevel, cmap=_cmap)
+      cont = plt.contourf(x, y, z, nlevel, cmap=_cmap, norm=_norm)
     elif ( vt == 1 ):
-      cont = plt.contour(x, y, z, nlevel, cmap=_cmap, linewidths=lwidth)
+      cont = plt.contour(x, y, z, nlevel, cmap=_cmap, norm=_norm,
+                         linewidths=lwidth)
   else:    # empty coord
     if ( vt == 0 ):
-      cont = plt.contourf(z, nlevel, cmap=_cmap)
+      cont = plt.contourf(z, nlevel, cmap=_cmap, norm=_norm)
     elif ( vt == 1 ):
-      cont = plt.contour(z, nlevel, cmap=_cmap, linewidths=lwidth)
+      cont = plt.contour(z, nlevel, cmap=_cmap, norm=_norm,
+                         linewidths=lwidth)
 
   if ( cbShow ):
     cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
@@ -92,8 +103,8 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
     # set as no margin
-    _pad = -0.22 * (100.0 / _dpi)
-    plt.tight_layout(pad=_pad)
+    #_pad = -0.22 * (100.0 / _dpi)
+    #plt.tight_layout(pad=_pad)
     # add id to global set variable
     g_fig_list.add(mid)
 
@@ -109,16 +120,24 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   plt.gca().spines['top'].set_visible(False)
   plt.gca().spines['bottom'].set_visible(False)
 
-  #_pad = -0.22 * (100.0 / _dpi)
-  #plt.tight_layout(pad=_pad)
+  _pad = -0.22 * (100.0 / _dpi)
+  plt.tight_layout(pad=_pad)
 
   if ( len(lut) == 0 ):
     _cmap = None
+    _norm = None
   else:
+    cmin = min(clrPos)
+    cmax = max(clrPos)
+    crange = cmax - cmin
+    cposList = [0.0]
+    if ( crange != 0.0 ):
+      cposList = [((v - cmin) / crange) for v in clrPos]
     clrlist = []
-    for pos, clr in zip(clrPos, clrs):
-      clrlist.append((pos, clr))
+    for cpos, clr in zip(cposList, clrs):
+      clrlist.append((cpos, clr))
     _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
+    _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
 
   csz = arrSz[0] * arrSz[1];
   val0 = vals.reshape(csz, vlen)
@@ -154,13 +173,16 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   if ( cbShow ):
     #pass
     cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
+    #_norm = mpl.colors.Normalize(vmin=0, vmax=1)
     if ( cbHrz ):
       #plt.colorbar(cont, cax, orientation='horizontal')
-      plt.colorbar.ColorbarBase(cax, cmap=_cmap,
+      mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm,
+      #mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
                                 orientation='horizontal')
     else:
       #plt.colorbar(cont, cax, orientation='vertical')
-      mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
+      mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm,
+      #mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
                                 orientation='vertical')
 
   return True
@@ -168,33 +190,37 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 def Output(mid, outname, step, row, col, proc):
   fname = outname
   p = fname.find('%S')
-  if ( p != -1 ):
+  while ( p != -1 ):
     n = int(fname[p+2])
     if ( n != -1 ):
       s = '%0' + fname[p+2] + 'd'
       s = s % step
       fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%S')
   p = fname.find('%R')
-  if ( p != -1 ):
+  while ( p != -1 ):
     n = int(fname[p+2])
     if ( n != -1 ):
       s = '%0' + fname[p+2] + 'd'
       s = s % row
       fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%R')
   p = fname.find('%C')
-  if ( p != -1 ):
+  while ( p != -1 ):
     n = int(fname[p+2])
     if ( n != -1 ):
       s = '%0' + fname[p+2] + 'd'
       s = s % col
       fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%C')
   p = fname.find('%P')
-  if ( p != -1 ):
+  while ( p != -1 ):
     n = int(fname[p+2])
     if ( n != -1 ):
       s = '%0' + fname[p+2] + 'd'
       s = s % proc
       fname = fname[0:p] + s + fname[p+3:]
+    p = fname.find('%P')
   
   fig = plt.figure(mid)
   fig.savefig(fname)
