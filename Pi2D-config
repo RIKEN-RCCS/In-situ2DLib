@@ -2,7 +2,7 @@
 PY_VER=${PY_VER:-3.6}
 PI2D_DIR=${PI2D_DIR:-$HOME/Pi2D}
 usage="\
-Usage: `basename $0` [--cflags][--libs][--help]"
+Usage: `basename $0` [--cflags][--ldflags][--libs][--help]"
 
 if test $# -eq 0; then
   echo "${usage}"
@@ -15,8 +15,11 @@ while test $# -gt 0; do
       echo -I${PI2D_DIR}/include `python${PY_VER}-config --cflags | sed -e 's/-arch i386//'` \
            -I`python${PY_VER} -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
       ;;
+    --ldflags)
+      echo -L${PI2D_DIR}/lib `python${PY_VER}-config --ldflags`
+      ;;
     --libs)
-      echo -L${PI2D_DIR}/lib -lPi2D `python${PY_VER}-config --ldflags`
+      echo -lPi2D `python${PY_VER}-config --libs`
       ;;
     --help)
       echo "${usage}"
