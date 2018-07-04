@@ -48,16 +48,16 @@ install: install-static install-lib
 install-lib : 
 	$(INSTALL) -d $(PI2D_DIR)
 	$(INSTALL) -d $(PI2D_DIR)/lib
-	$(INSTALL) -t $(PI2D_DIR)/lib libPi2D.a libPi2D_d.a
+	$(INSTALL) -m 644 libPi2D.a libPi2D_d.a $(PI2D_DIR)/lib
 
 install-static :
 	$(INSTALL) -d $(PI2D_DIR)
 	$(INSTALL) -d $(PI2D_DIR)/bin
 	$(INSTALL) -d $(PI2D_DIR)/lib
 	$(INSTALL) -d $(PI2D_DIR)/include
-	$(INSTALL) -t $(PI2D_DIR)/include $(HEADERS)
-	$(INSTALL) -t $(PI2D_DIR)/bin Pi2D-config
-	$(INSTALL) -m 644 -t $(PI2D_DIR) Pi2D.py $(LICENCES)
+	$(INSTALL) Pi2D-config $(PI2D_DIR)/bin
+	$(INSTALL) -m 644 $(HEADERS) $(PI2D_DIR)/include
+	$(INSTALL) -m 644 Pi2D.py $(LICENCES) $(PI2D_DIR)
 
 clean:
 	$(RM) $(OBJS)
