@@ -2,33 +2,42 @@
 PY_VER=${PY_VER:-3.6}
 PI2D_DIR=${PI2D_DIR:-$HOME/Pi2D}
 usage="\
-Usage: `basename $0` [--cflags][--ldflags][--libs][--help]"
+Usage: `basename $0` [--double][--cflags][--ldflags][--libs][--help]"
 
 if test $# -eq 0; then
-  echo "${usage}"
-  exit 1
+    echo "${usage}"
+    exit 1
 fi
 
+CFLG=""
+LFLG=""
+
 while test $# -gt 0; do
-  case "$1" in
-    --cflags)
-      echo -I${PI2D_DIR}/include `python${PY_VER}-config --cflags | sed -e 's/-arch i386//'` \
-           -I`python${PY_VER} -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
-      ;;
-    --ldflags)
-      echo -L${PI2D_DIR}/lib `python${PY_VER}-config --ldflags`
-      ;;
-    --libs)
-      echo -lPi2D `python${PY_VER}-config --libs`
-      ;;
-    --help)
-      echo "${usage}"
-      ;;
-    *)
-      echo "${usage}"
-      exit 1
-      ;;
-  esac
-  shift
+    case "$1" in
+	--double)
+	    CFLG="-D_REAL_DBL"
+	    LFLG="_d"
+	    ;;
+	--cflags)
+	    echo -I${PI2D_DIR}/include `python${PY_VER}-config --cflags | sed -e 's/-arch i386//'` \
+		 -I`python${PY_VER} -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'` \
+		 ${CFLG}
+	    ;;
+	--ldflags)
+	    echo -L${PI2D_DIR}/lib `python${PY_VER}-config --ldflags`
+	    ;;
+	--libs)
+	    echo -lPi2D${LFLG} `python${PY_VER}-config --libs`
+	    ;;
+	--help)
+	    echo "${usage}"
+	    exit 0
+	    ;;
+	*)
+	    echo "${usage}"
+	    exit 1
+	    ;;
+    esac
+    shift
 done
 exit 0
