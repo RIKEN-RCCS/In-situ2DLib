@@ -54,6 +54,7 @@ private:
   PyObject *pModule;
   PyObject *pFuncDrawS;
   PyObject *pFuncDrawV;
+  PyObject *pFuncDrawCB;
   PyObject *pFuncOut;
 
 };

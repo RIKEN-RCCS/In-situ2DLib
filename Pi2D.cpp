@@ -44,6 +44,7 @@ Pi2D::Pi2D()
   pModule = NULL;
   pFuncDrawS = NULL;
   pFuncDrawV = NULL;
+  pFuncDrawCB = NULL;
   pFuncOut = NULL;
 
   if ( s_id == 0 ) {
@@ -90,6 +91,11 @@ Pi2D::Pi2D()
     if ( s_debugprint ) PyErr_Print();
     return;
   }
+  pFuncDrawCB = PyObject_GetAttrString(pModule, "DrawCB");
+  if ( ! pFuncDrawCB || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    return;
+  }
   pFuncOut = PyObject_GetAttrString(pModule, "Output");
   if ( ! pFuncOut || PyErr_Occurred() ) {
     if ( s_debugprint ) PyErr_Print();
@@ -110,6 +116,8 @@ Pi2D::~Pi2D()
     Py_DECREF(pFuncDrawS);
   if ( pFuncDrawV )
     Py_DECREF(pFuncDrawV);
+  if ( pFuncDrawCB )
+    Py_DECREF(pFuncDrawCB);
   if ( pFuncOut )
     Py_DECREF(pFuncOut);
   if ( pModule )
@@ -256,6 +264,8 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   long int dims4[1] = {4};
 
   LUT lut = m_lutList[lutname];
+  if ( cbShow )
+    m_registLut.insert(lutname);
 /*
   LUT *plut = NULL;
   LUT lut;
@@ -423,46 +433,13 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
-  // set cbSize
-  PyObject* pCbSz =
-      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
-                                reinterpret_cast<void*>(lut.cbSize));
-  if ( ! pCbSz || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
-  // set cbPos
-  PyObject* pCbPos =
-      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
-                                reinterpret_cast<void*>(lut.cbPos));
-  if ( ! pCbPos || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
-  // set cbHoriz
-  PyObject* pCbHrz;
-  if ( lut.cbHoriz )
-    pCbHrz = Py_True;
-  else
-    pCbHrz = Py_False;
-
-  // set cbNumTic
-  PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
-  if ( ! pCbTic || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
   // call python function
   PyObject* pRet;
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawS,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
                    pCtype, pZarr, pLut, pNlevel, pShow, pWidth,
-                   pClrPos, pClr, pCbSz, pCbPos, pCbHrz, pCbTic,
-                   NULL);
+                   pClrPos, pClr, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       if ( s_debugprint ) PyErr_Print();
       ret = false;
@@ -485,10 +462,6 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   if ( pShow ) Py_DECREF(pShow);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
-  if ( pCbSz ) Py_DECREF(pCbSz);
-  if ( pCbPos ) Py_DECREF(pCbPos);
-  if ( pCbHrz ) Py_DECREF(pCbHrz);
-  if ( pCbTic ) Py_DECREF(pCbTic);
 
   return ret;
 }
@@ -514,22 +487,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   long int dims4[1] = {4};
 
   LUT lut = m_lutList[lutname];
-/*
-  LUT *plut = NULL;
-  LUT lut;
-  if ( m_lutList.size() != 0 ) {
-    map<string, LUT>::iterator itr = m_lutList.find(lutname);
-    if ( itr != m_lutList.end() )
-      plut = &(itr->second);
-  }
-  if ( plut ) {
-    lut = m_lutList[lutname];
-    if ( cbShow )
-      m_registLut.insert(lutname);
-  } else {
-    return false;
-  }
-*/
+  if ( cbShow )
+    m_registLut.insert(lutname);
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -709,7 +668,6 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
         }
       }
       for ( int i = 0; i < sz; i++ ) {
-        //color_s clr = lut.ColorByValue(v[i]/vmax);
         color_s clr = lut.ColorByValue(v[i]);
         clist[i][0] = clr.red;
         clist[i][1] = clr.green;
@@ -757,53 +715,20 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
     ret = false;
   }
 
-  // set cbSize
-  PyObject* pCbSz =
-      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
-                                reinterpret_cast<void*>(lut.cbSize));
-  if ( ! pCbSz || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
-  // set cbPos
-  PyObject* pCbPos =
-      PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
-                                reinterpret_cast<void*>(lut.cbPos));
-  if ( ! pCbPos || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
-  // set cbHoriz
-  PyObject* pCbHrz;
-  if ( lut.cbHoriz )
-    pCbHrz = Py_True;
-  else
-    pCbHrz = Py_False;
-
-  // set cbNumTic
-  PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
-  if ( ! pCbTic || PyErr_Occurred() ) {
-    if ( s_debugprint ) PyErr_Print();
-    ret = false;
-  }
-
   // call python function
   PyObject* pRet;
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawV,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
                    pVal, pVlenV, pVidV, pLut, pShow, pWidth,
-                   pMag, pRatio, pClrList,
-                   pClrPos, pClr, pCbSz, pCbPos, pCbHrz, pCbTic,
-                   NULL);
+                   pMag, pRatio, pClrList, pClrPos, pClr, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
   }
 
+  // decref python object
   if ( pId ) Py_DECREF(pId);
   if ( pImgSz ) Py_DECREF(pImgSz);
   if ( pVP ) Py_DECREF(pVP);
@@ -821,10 +746,6 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( pClrList ) Py_DECREF(pClrList);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
-  if ( pCbSz ) Py_DECREF(pCbSz);
-  if ( pCbPos ) Py_DECREF(pCbPos);
-  if ( pCbHrz ) Py_DECREF(pCbHrz);
-  if ( pCbTic ) Py_DECREF(pCbTic);
 
   return ret;
 }
@@ -836,18 +757,113 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   bool ret = true;
 
-  set<string>::iterator itr = m_registLut.begin();
-  for ( ; itr != m_registLut.end(); itr++ ) {
-    string lutname = *itr;
-    LUT lut = m_lutList[lutname];
-    printf("dbg: lut = %s\n", lutname.c_str());
-  }
-
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
   if ( ! pId || PyErr_Occurred() ) {
     if ( s_debugprint ) PyErr_Print();
     ret = false;
+  }
+
+  // draw colorbar for each registered LUT
+  set<string>::iterator itr = m_registLut.begin();
+  for ( ; itr != m_registLut.end(); itr++ ) {
+    string lutname = *itr;
+    LUT lut = m_lutList[lutname];
+
+    // set lut name
+    PyObject* pLut;
+#if PY_MAJOR_VERSION >= 3
+    pLut = PyUnicode_FromString(lutname.c_str());
+#else
+    pLut = PyString_FromString(lutname.c_str());
+#endif
+    if ( ! pLut || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+
+    // set Color
+    int sz = lut.colorList.size();
+    Real vals[sz];
+    Real clrs[sz][3];
+    int cnt = 0;
+    map<float, color_s>::iterator itr = lut.colorList.begin();
+    while( itr != lut.colorList.end() ) {
+      vals[cnt] = (*itr).first;
+      clrs[cnt][0] = (*itr).second.red;
+      clrs[cnt][1] = (*itr).second.green;
+      clrs[cnt][2] = (*itr).second.blue;
+      cnt++;
+      ++itr;
+    }
+    npy_intp clr_dims1[1] = {sz};
+    npy_intp clr_dims2[2] = {sz, 3};
+    PyObject* pClrPos =
+        PyArray_SimpleNewFromData(1, clr_dims1, NPY_REAL, (void*)vals);
+    if ( ! pClrPos || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+    PyObject* pClr =
+        PyArray_SimpleNewFromData(2, clr_dims2, NPY_REAL, (void*)clrs);
+    if ( ! pClr || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+
+    long int dims2[1] = {2};
+
+    // set cbSize
+    PyObject* pCbSz =
+        PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                  reinterpret_cast<void*>(lut.cbSize));
+    if ( ! pCbSz || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+    // set cbPos
+    PyObject* pCbPos =
+        PyArray_SimpleNewFromData(1, dims2, NPY_REAL,
+                                  reinterpret_cast<void*>(lut.cbPos));
+    if ( ! pCbPos || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+    // set cbHoriz
+    PyObject* pCbHrz;
+    if ( lut.cbHoriz )
+      pCbHrz = Py_True;
+    else
+      pCbHrz = Py_False;
+    // set cbNumTic
+    PyObject* pCbTic = PyLong_FromSize_t(lut.cbNumTic);
+    if ( ! pCbTic || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
+
+    //printf("dbg: DrawCB: lut = %s\n", lutname.c_str());
+
+    // call python function
+    PyObject* pRet;
+    if ( ret ) {
+      pRet = PyObject_CallFunctionObjArgs(pFuncDrawCB,
+                     pId, pLut, pClrPos, pClr, pCbSz, pCbPos,
+                     pCbHrz, pCbTic, NULL);
+      if ( ! pRet || PyErr_Occurred() ) {
+        if ( s_debugprint ) PyErr_Print();
+        ret = false;
+      }
+    }
+
+    // decref python object
+    if ( pLut ) Py_DECREF(pLut);
+    if ( pClrPos ) Py_DECREF(pClrPos);
+    if ( pClr ) Py_DECREF(pClr);
+    if ( pCbSz ) Py_DECREF(pCbSz);
+    if ( pCbPos ) Py_DECREF(pCbPos);
+    if ( pCbHrz ) Py_DECREF(pCbHrz);
+    if ( pCbTic ) Py_DECREF(pCbTic);
   }
 
   // set outputPtn

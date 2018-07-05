@@ -9,8 +9,7 @@ g_fig_list = set()
 
 
 def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
-          vt, z, lut, nlevel, cbShow, lwidth, clrPos, clrs,
-          cbSz, cbPos, cbHrz, cbTic):
+          vt, z, lut, nlevel, cbShow, lwidth, clrPos, clrs):
   global g_fig_list
   _dpi = 100
   if ( mid in g_fig_list ):
@@ -19,10 +18,6 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     x = imgSz[0] / 100.0
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
-    # set as no margin
-    #_pad = -0.22 * (100.0 / _dpi)
-    #plt.tight_layout(pad=_pad)
-    # add id to global set variable
     g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
@@ -53,7 +48,6 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     if ( crange != 0.0 ):
       cposList = [((v - cmin) / crange) for v in clrPos]
     clrlist = []
-    #for pos, clr in zip(clrPos, clrs):
     for cpos, clr in zip(cposList, clrs):
       clrlist.append((cpos, clr))
     _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
@@ -80,18 +74,11 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
       cont = plt.contour(z, nlevel, cmap=_cmap, norm=_norm,
                          linewidths=lwidth)
 
-  if ( cbShow ):
-    cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
-    if ( cbHrz ):
-      plt.colorbar(cont, cax, orientation='horizontal')
-    else:
-      plt.colorbar(cont, cax, orientation='vertical')
-
   return True
 
 def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
           vals, vlen, vid, lut, cbShow, lwidth, vmag, vratio,
-          clist, clrPos, clrs, cbSz, cbPos, cbHrz, cbTi):
+          clist, clrPos, clrs):
   #import pdb; pdb.set_trace()
 
   global g_fig_list
@@ -102,10 +89,6 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     x = imgSz[0] / 100.0
     y = imgSz[1] / 100.0
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
-    # set as no margin
-    #_pad = -0.22 * (100.0 / _dpi)
-    #plt.tight_layout(pad=_pad)
-    # add id to global set variable
     g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
@@ -170,20 +153,44 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     plt.quiver(u, v, angles='xy', scale_units='xy',
                scale=_scale, headwidth=wid, headlength=leng)
 
-  if ( cbShow ):
-    #pass
-    cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
-    #_norm = mpl.colors.Normalize(vmin=0, vmax=1)
-    if ( cbHrz ):
-      #plt.colorbar(cont, cax, orientation='horizontal')
-      mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm,
-      #mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
-                                orientation='horizontal')
-    else:
-      #plt.colorbar(cont, cax, orientation='vertical')
-      mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm,
-      #mpl.colorbar.ColorbarBase(cax, cmap=_cmap,
-                                orientation='vertical')
+  return True
+
+def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
+  #import pdb; pdb.set_trace()
+  if ( mid in g_fig_list ):
+    fig = plt.figure(mid)
+  else:
+    return False
+
+  if ( len(lut) == 0 ):
+    _cmap = None
+    _norm = None
+    _ticks = None
+  else:
+    cmin = min(clrPos)
+    cmax = max(clrPos)
+    crange = cmax - cmin
+    cposList = [0.0]
+    if ( crange != 0.0 ):
+      cposList = [((v - cmin) / crange) for v in clrPos]
+    clrlist = []
+    for cpos, clr in zip(cposList, clrs):
+      clrlist.append((cpos, clr))
+    _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
+    _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
+    _ticks = [cmin]
+    df = crange / (cbTic - 1)
+    for i in range(cbTic - 1):
+      v = cmin + df * (i + 1)
+      _ticks.append(v)
+
+  cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
+  if ( cbHrz ):
+    mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
+                              orientation='horizontal')
+  else:
+    mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
+                              orientation='vertical')
 
   return True
 
