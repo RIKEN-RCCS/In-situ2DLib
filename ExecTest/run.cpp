@@ -91,7 +91,7 @@ int main()
   if ( ! pi1->SetCoord(c_arr, 2, vid) )
     printf("error: SetCoord\n");
 
-  if ( ! pi1->DrawS(ContourLine, z_arr, "", 10, true) )
+  if ( ! pi1->DrawS(ContourLine, z_arr) )
     printf("error: draw contour(f)\n");
 
   Real* v_arr = new Real[40 * 20 * 2];

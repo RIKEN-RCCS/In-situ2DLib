@@ -1,5 +1,4 @@
 #include "Pi2D.h"
-//#include <Python.h>
 #include "numpy/arrayobject.h"
 #include <complex>
 #include <cstdlib>
@@ -32,8 +31,6 @@ Pi2D::Pi2D()
     m_viewPort[i] = 0.0;
   m_outputPtn = "./outimage_%S6.png";
   m_coord = NULL;
-  //LUT lut;
-  //m_lutList["default"] = lut;
   m_lutList.clear();
   m_lineWidth = 1.0;
   m_vectorMag = 1.0;
@@ -134,19 +131,16 @@ bool Pi2D::SetAttrib(const string arg)
 {
   // check empty argument
   if ( arg.empty() ) {
-    //printf("error: empty string\n");
     return false;
   }
 
   // separete into attribute and value
   size_t p = arg.find("=");
   if  ( p == string::npos ) {
-    //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
   }
   string attr = arg.substr(0, p);
   string vals = arg.substr(p+1);
-  //printf("key: %s, value: %s\n", attr.c_str(), vals.c_str());
 
   if ( attr == "imageSize" ) {
     int w, h;
@@ -194,7 +188,6 @@ bool Pi2D::SetAttrib(const string arg)
     m_vectorHeadRatio[0] = r0;
     m_vectorHeadRatio[1] = r1;
   } else {
-    //printf("error: invalid attribute: %s\n", arg.c_str());
     return false;
   }
 
@@ -272,22 +265,6 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   LUT lut = m_lutList[lutname];
   if ( cbShow )
     m_registLut.insert(lutname);
-/*
-  LUT *plut = NULL;
-  LUT lut;
-  if ( m_lutList.size() != 0 ) {
-    map<string, LUT>::iterator itr = m_lutList.find(lutname);
-    if ( itr != m_lutList.end() )
-      plut = &(itr->second);
-  }
-  if ( plut ) {
-    lut = m_lutList[lutname];
-    if ( cbShow )
-      m_registLut.insert(lutname);
-  } else {
-    return false;
-  }
-*/
 
   // set ID
   PyObject* pId = PyLong_FromSize_t(m_id);
@@ -679,8 +656,6 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
         clist[i][1] = clr.green;
         clist[i][2] = clr.blue;
         clist[i][3] = 1.0;
-        //printf("dbg: v[%d] = %f, clr = [%f, %f, %f, %f]\n",
-        //       i, v[i], clist[i][0], clist[i][1], clist[i][2], clist[i][3]);
       }
       npy_intp clr_dims0[2] = {sz, 4};
       pClrList =
@@ -847,8 +822,6 @@ bool Pi2D::Output(const int step, const int row, const int col,
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
-
-    //printf("dbg: DrawCB: lut = %s\n", lutname.c_str());
 
     // call python function
     PyObject* pRet;
