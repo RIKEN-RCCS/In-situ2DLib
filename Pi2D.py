@@ -53,6 +53,11 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
     _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
 
+  if nlevel <= 0:
+    nL = 10
+  else:
+    nL = int(nlevel)
+    
   if ( len(coord) != 1 ):
     csz = arrSz[0] * arrSz[1];
     coord0 = coord.reshape(csz, veclen)
@@ -63,15 +68,15 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     if ( vt == 0 ):
-      cont = plt.contourf(x, y, z, nlevel, cmap=_cmap, norm=_norm)
+      cont = plt.contourf(x, y, z, nL, cmap=_cmap, norm=_norm)
     elif ( vt == 1 ):
-      cont = plt.contour(x, y, z, nlevel, cmap=_cmap, norm=_norm,
+      cont = plt.contour(x, y, z, nL, cmap=_cmap, norm=_norm,
                          linewidths=lwidth)
   else:    # empty coord
     if ( vt == 0 ):
-      cont = plt.contourf(z, nlevel, cmap=_cmap, norm=_norm)
+      cont = plt.contourf(z, nL, cmap=_cmap, norm=_norm)
     elif ( vt == 1 ):
-      cont = plt.contour(z, nlevel, cmap=_cmap, norm=_norm,
+      cont = plt.contour(z, nL, cmap=_cmap, norm=_norm,
                          linewidths=lwidth)
 
   return True
