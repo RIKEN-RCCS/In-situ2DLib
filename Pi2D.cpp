@@ -2,6 +2,7 @@
 //#include <Python.h>
 #include "numpy/arrayobject.h"
 #include <complex>
+#include <cstdlib>
 
 #if PY_MAJOR_VERSION >= 3
 int init_numpy() {import_array();}
@@ -53,9 +54,14 @@ Pi2D::Pi2D()
       if ( s_debugprint ) PyErr_Print();
     }
 
+    string pi2dDir = ".";
+    char* pi2dDirEnv = getenv("PI2D_DIR");
+    if ( pi2dDirEnv && strlen(pi2dDirEnv) > 0 )
+      pi2dDir = pi2dDirEnv;
+    
     string cmd;
     cmd += "from __future__ import print_function\n";
-    cmd += "import sys; sys.path.append('.')\n";
+    cmd += "import sys; sys.path.append('" + pi2dDir + "')\n";
     PyRun_SimpleString(cmd.c_str());
     if ( s_debugprint && PyErr_Occurred() ) {
       if ( s_debugprint ) PyErr_Print();

@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "../Pi2D.h"
+#include "Pi2D.h"
 
 int main()
 {
