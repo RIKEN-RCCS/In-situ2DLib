@@ -4,7 +4,13 @@ PI2D_DIR := $(shell echo ${PI2D_DIR})
 else
 PI2D_DIR := $(HOME)/Pi2D
 endif
-PY_VER := $(shell echo ${PY_VER:-3.6})
+ifdef PY_VER
+PY_VER := $(shell echo ${PY_VER})
+else
+PY_VER := 3.6
+endif
+$(info PY_VER: $(PY_VER))
+$(info PI2D_DIR: $(PI2D_DIR))
 
 #G=-g
 CXX = g++
