@@ -15,8 +15,8 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
   else:
-    x = imgSz[0] / 100.0
-    y = imgSz[1] / 100.0
+    x = imgSz[0] / _dpi
+    y = imgSz[1] / _dpi
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
     g_fig_list.add(mid)
 
@@ -34,8 +34,6 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 
   _pad = -0.22 * (100.0 / _dpi)
   plt.tight_layout(pad=_pad)
-
-  #import pdb; pdb.set_trace()
 
   if ( len(lut) == 0 ):
     _cmap = None
@@ -84,15 +82,13 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
           vals, vlen, vid, lut, cbShow, lwidth, vmag, vratio,
           clist, clrPos, clrs):
-  #import pdb; pdb.set_trace()
-
   global g_fig_list
-  _dpi = 100
+  _dpi = 100.0
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
   else:
-    x = imgSz[0] / 100.0
-    y = imgSz[1] / 100.0
+    x = imgSz[0] / _dpi
+    y = imgSz[1] / _dpi
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
     g_fig_list.add(mid)
 
@@ -137,6 +133,8 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   v = v1.reshape(arrSz[0], arrSz[1])
 
   _scale = 1.0 / vmag
+  d = np.linalg.norm(imgSz-np.zeros(2))
+  _width = lwidth / d
   wid = vratio[0]
   leng = vratio[1]
   if ( vratio[0] == -1 ):
@@ -153,15 +151,14 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     plt.quiver(x, y, u, v, angles='xy', scale_units='xy', color=clist,
-               scale=_scale, headwidth=wid, headlength=leng)
+               scale=_scale, width=_width, headwidth=wid, headlength=leng)
   else:
-    plt.quiver(u, v, angles='xy', scale_units='xy',
-               scale=_scale, headwidth=wid, headlength=leng)
+    plt.quiver(u, v, angles='xy', scale_units='xy', color=clist,
+               scale=_scale, width=_width, headwidth=wid, headlength=leng)
 
   return True
 
 def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
-  #import pdb; pdb.set_trace()
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
   else:
