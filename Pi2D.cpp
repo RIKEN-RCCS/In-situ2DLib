@@ -157,36 +157,40 @@ bool Pi2D::SetAttrib(const string arg)
     m_arraySz[0] = w;
     m_arraySz[1] = h;
   } else if ( attr == "viewport" ) {
-    Real x0, x1, y0, y1;
-    int n = sscanf(vals.c_str(), "%f, %f, %f, %f", &x0, &x1, &y0, &y1);
+    //Real x0, x1, y0, y1;
+    double x0, x1, y0, y1;
+    int n = sscanf(vals.c_str(), "%lf, %lf, %lf, %lf", &x0, &x1, &y0, &y1);
     if ( n != 4 ) return false;
-    m_viewPort[0] = x0;
-    m_viewPort[1] = x1;
-    m_viewPort[2] = y0;
-    m_viewPort[3] = y1;
+    m_viewPort[0] = (Real)x0;
+    m_viewPort[1] = (Real)x1;
+    m_viewPort[2] = (Real)y0;
+    m_viewPort[3] = (Real)y1;
   } else if ( attr == "outfilePat" ) {
     if ( vals.empty() ) return false;
     m_outputPtn = vals;
   } else if ( attr == "lineWidth" ) {
-    Real w;
-    int n = sscanf(vals.c_str(), "%f", &w);
+    //Real w;
+    double w;
+    int n = sscanf(vals.c_str(), "%lf", &w);
     if ( n != 1 ) return false;
     if ( w < 0.0 ) return false;
-    m_lineWidth = w;
+    m_lineWidth = (Real)w;
   } else if ( attr == "vectorMag" ) {
-    Real v;
-    int n = sscanf(vals.c_str(), "%f", &v);
+    //Real v;
+    double v;
+    int n = sscanf(vals.c_str(), "%lf", &v);
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
-    m_vectorMag = v;
+    m_vectorMag = (Real)v;
   } else if ( attr == "vectorHeadRatio" ) {
-    Real r0, r1;
-    int n = sscanf(vals.c_str(), "%f, %f", &r0, &r1);
+    //Real r0, r1;
+    double r0, r1;
+    int n = sscanf(vals.c_str(), "%lf, %lf", &r0, &r1);
     if ( n != 2 ) return false;
     if ( r0 != -1 && r0 < 0.0 ) return false;
     if ( r1 != -1 && r1 < 0.0 ) return false;
-    m_vectorHeadRatio[0] = r0;
-    m_vectorHeadRatio[1] = r1;
+    m_vectorHeadRatio[0] = (Real)r0;
+    m_vectorHeadRatio[1] = (Real)r1;
   } else {
     return false;
   }
