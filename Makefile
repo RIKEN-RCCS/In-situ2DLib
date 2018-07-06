@@ -33,8 +33,9 @@ OBJS :=	Pi2D.o LUT.o \
 	Pi2D_json.o \
 	pi2d_exif.o
 
-HEADERS := LUT.h  Pi2D.h  Pi2Ddefs.h  pi2d_c.h  picojson.h pi2d_f.inc
-LICENCES := LICENSE  LICENSE.picojson
+HEADERS := LUT.h Pi2D.h Pi2Ddefs.h pi2d_c.h picojson.h pi2d_f.inc
+LICENCES := LICENSE LICENSE.picojson
+DOCS := doc/SystemDesign.pdf doc/UserGuide.pdf
 
 all : $(TARGET)
 
@@ -61,8 +62,10 @@ install-static :
 	$(INSTALL) -d $(PI2D_DIR)/bin
 	$(INSTALL) -d $(PI2D_DIR)/lib
 	$(INSTALL) -d $(PI2D_DIR)/include
+	$(INSTALL) -d $(PI2D_DIR)/doc
 	$(INSTALL) Pi2D-config $(PI2D_DIR)/bin
 	$(INSTALL) -m 644 $(HEADERS) $(PI2D_DIR)/include
+	$(INSTALL) -m 644 $(DOCS) $(PI2D_DIR)/doc
 	$(INSTALL) -m 644 Pi2D.py $(LICENCES) $(PI2D_DIR)
 
 clean:
