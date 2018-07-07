@@ -1,7 +1,7 @@
 G=-g
 PY_VER=3.6
 CXX=g++
-CXXFLAGS=$(G) -I.. `python$(PY_VER)-config --cflags | sed -e 's/-arch i386//'` \
+CXXFLAGS=$(G) -I.. `python$(PY_VER)-config --includes` \
 	-I`python$(PY_VER) -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
 LDFLAGS=../libPi2D.a `python$(PY_VER)-config --ldflags`
 

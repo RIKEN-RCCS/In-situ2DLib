@@ -21,7 +21,7 @@ INSTALL = install
 RFLG=
 LFLG=
 
-CXXFLAGS = $(G) $(RFLG) `python$(PY_VER)-config --cflags | sed -e 's/-arch i386//'` \
+CXXFLAGS = $(G) $(RFLG) `python$(PY_VER)-config --includes` \
 	-I`python$(PY_VER) -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
 LDFLAGS = `python$(PY_VER)-config --ldflags`
 ARFLGS = crsv

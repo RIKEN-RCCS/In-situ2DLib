@@ -159,6 +159,7 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   return True
 
 def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
+  global g_fig_list
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
   else:
@@ -197,6 +198,7 @@ def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
   return True
 
 def Output(mid, outname, step, row, col, proc):
+  global g_fig_list
   fname = outname
   p = fname.find('%S')
   while ( p != -1 ):
@@ -235,6 +237,5 @@ def Output(mid, outname, step, row, col, proc):
   fig.savefig(fname)
 
   g_fig_list.remove(mid)
-
   return True
 

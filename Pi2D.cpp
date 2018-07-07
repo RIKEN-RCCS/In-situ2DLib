@@ -2,6 +2,9 @@
 #include "numpy/arrayobject.h"
 #include <complex>
 #include <cstdlib>
+#include <vector>
+#include <sstream>
+#include <istream>
 
 #if PY_MAJOR_VERSION >= 3
 int init_numpy() {import_array();}
@@ -19,6 +22,29 @@ using namespace std;
 
 size_t Pi2D::s_id = 0;
 bool Pi2D::s_debugprint = true;
+
+
+static string _trim(const string& str, const char* trimCharList=" \t\r\n")
+{
+  string result;
+  string::size_type left = str.find_first_not_of(trimCharList);
+  if ( left != string::npos ) {
+    string::size_type right = str.find_last_not_of(trimCharList);
+    result = str.substr(left, right - left + 1);
+  }
+  return result;
+}
+
+vector<string> _split(const string& str, const char delimChar=',')
+{
+  vector<string> v;
+  stringstream ss(str);
+  string buf;
+  while ( getline(ss, buf, delimChar) ) {
+    v.push_back(buf);
+  }
+  return v;
+}
 
 
 Pi2D::Pi2D()
@@ -127,8 +153,10 @@ Pi2D::~Pi2D()
     Py_DECREF(pModule);
 }
 
-bool Pi2D::SetAttrib(const string arg)
+bool Pi2D::SetAttrib(const string xarg)
 {
+  string arg = _trim(xarg);
+  
   // check empty argument
   if ( arg.empty() ) {
     return false;
@@ -144,23 +172,30 @@ bool Pi2D::SetAttrib(const string arg)
 
   if ( attr == "imageSize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    w = atoi(vs[0].c_str());
+    h = atoi(vs[1].c_str());
     if ( w < 0 || h < 0 ) return false;
     m_imageSz[0] = w;
     m_imageSz[1] = h;
   } else if ( attr == "arraySize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    w = atoi(vs[0].c_str());
+    h = atoi(vs[1].c_str());
     if ( w < 0 || h < 0 ) return false;
     m_arraySz[0] = w;
     m_arraySz[1] = h;
   } else if ( attr == "viewport" ) {
-    //Real x0, x1, y0, y1;
     double x0, x1, y0, y1;
-    int n = sscanf(vals.c_str(), "%lf, %lf, %lf, %lf", &x0, &x1, &y0, &y1);
-    if ( n != 4 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 4 ) return false;
+    x0 = atof(vs[0].c_str());
+    x1 = atof(vs[1].c_str());
+    y0 = atof(vs[2].c_str());
+    y1 = atof(vs[3].c_str());
     m_viewPort[0] = (Real)x0;
     m_viewPort[1] = (Real)x1;
     m_viewPort[2] = (Real)y0;
@@ -169,24 +204,23 @@ bool Pi2D::SetAttrib(const string arg)
     if ( vals.empty() ) return false;
     m_outputPtn = vals;
   } else if ( attr == "lineWidth" ) {
-    //Real w;
     double w;
     int n = sscanf(vals.c_str(), "%lf", &w);
     if ( n != 1 ) return false;
     if ( w < 0.0 ) return false;
     m_lineWidth = (Real)w;
   } else if ( attr == "vectorMag" ) {
-    //Real v;
     double v;
     int n = sscanf(vals.c_str(), "%lf", &v);
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
     m_vectorMag = (Real)v;
   } else if ( attr == "vectorHeadRatio" ) {
-    //Real r0, r1;
     double r0, r1;
-    int n = sscanf(vals.c_str(), "%lf, %lf", &r0, &r1);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    r0 = atof(vs[0].c_str());
+    r1 = atof(vs[1].c_str());
     if ( r0 != -1 && r0 < 0.0 ) return false;
     if ( r1 != -1 && r1 < 0.0 ) return false;
     m_vectorHeadRatio[0] = (Real)r0;

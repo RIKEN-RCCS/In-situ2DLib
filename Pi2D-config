@@ -19,7 +19,7 @@ while test $# -gt 0; do
 	    LFLG="_d"
 	    ;;
 	--cflags)
-	    echo -I${PI2D_DIR}/include `python${PY_VER}-config --cflags | sed -e 's/-arch i386//'` \
+	    echo -I${PI2D_DIR}/include `python${PY_VER}-config --includes` \
 		 -I`python${PY_VER} -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'` \
 		 ${CFLG}
 	    ;;

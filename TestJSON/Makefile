@@ -1,7 +1,7 @@
 G=-g
 PY_VER=3.6
 CXX=g++
-CXXFLAGS=$(G) -I.. `python$(PY_VER)-config --cflags`
+CXXFLAGS=$(G) -I.. `python$(PY_VER)-config --includes`
 LDFLAGS=../libPi2D.a `python$(PY_VER)-config --ldflags`
 
 .SUFFIXES: .cpp .o
