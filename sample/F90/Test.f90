@@ -52,14 +52,20 @@ program test
 
   write(attrbuf, *) "arraySize=", v_dims(1), ",", v_dims(2)
   iret = pi2d_setattrib(attrbuf, len_trim(attrbuf))
-  iret = pi2d_setattrib(attrbuf, len_trim(attrbuf))
   if ( iret .ne. 0 ) then
      print *, "pi2d_setattrib arraySize failed"
      stop
   endif
+
+  attrbuf = "vectorMag=5"
+  iret = pi2d_setattrib(attrbuf, len_trim(attrbuf))
+  if ( iret .ne. 0 ) then
+     print *, "pi2d_setattrib vectorMag failed"
+     stop
+  endif
   
-  vidx(1) = 1
-  vidx(2) = 2
+  vidx(1) = 0
+  vidx(2) = 1
   iret = pi2d_drawv(v, 3, vidx, lutn, 0, -2, 0)
   if ( iret .ne. 0 ) then
      print *, "pi2d_drawv failed"
@@ -73,6 +79,10 @@ program test
   endif
   
   iret = pi2d_finalize()
+  if ( iret .ne. 0 ) then
+     print *, "pi2d_finalize failed"
+     stop
+  endif
   
   stop
 end program test
