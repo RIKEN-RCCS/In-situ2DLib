@@ -8,6 +8,11 @@ LUT::LUT() : cbHoriz(false), cbNumTic(2)
   colorList[0.0] = clr;
   cbSize[0] = 0.05; cbSize[1] = 0.5;
   cbPos[0] = 0.0; cbPos[1] = 0.0;
+  //color_s bgClr(1.0, 1.0, 1.0);
+  //cbTicColor = bgClr;
+  cbTicColor[0]= 1.0;
+  cbTicColor[1]= 1.0;
+  cbTicColor[2]= 1.0;
 }
 
 LUT::~LUT()

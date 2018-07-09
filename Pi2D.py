@@ -9,15 +9,19 @@ g_fig_list = set()
 
 
 def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
-          vt, z, lut, nlevel, cbShow, lwidth, clrPos, clrs):
+          vt, z, lut, nlevel, bgClr, cbShow, lwidth, clrPos, clrs):
   global g_fig_list
   _dpi = 100
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
+    #ax = fig.subplots()
+    #ax.patch.set_facecolor(bgClr)
   else:
     x = imgSz[0] / _dpi
     y = imgSz[1] / _dpi
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
+    ax = fig.add_subplot(111)
+    ax.patch.set_facecolor(bgClr)
     g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
@@ -80,16 +84,21 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   return True
 
 def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
-          vals, vlen, vid, lut, cbShow, lwidth, vmag, vratio,
+          vals, vlen, vid, lut, bgClr, cbShow, lwidth, vmag, vratio,
           clist, clrPos, clrs):
   global g_fig_list
   _dpi = 100.0
+  ax = None
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
+    #ax = fig.subplots()
+    #ax.patch.set_facecolor(bgClr)
   else:
     x = imgSz[0] / _dpi
     y = imgSz[1] / _dpi
     fig = plt.figure(mid, figsize=(x, y), dpi=_dpi)
+    ax = fig.add_subplot(111)
+    ax.patch.set_facecolor(bgClr)
     g_fig_list.add(mid)
 
   if ( vp[0] == 0.0 and vp[1] == 0.0 and vp[2] == 0.0 and vp[3] == 0.0 ):
@@ -158,7 +167,7 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 
   return True
 
-def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
+def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic, cbTicClr):
   global g_fig_list
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
@@ -189,15 +198,18 @@ def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic):
 
   cax = fig.add_axes([cbPos[0], cbPos[1], cbSz[0], cbSz[1]])
   if ( cbHrz ):
-    mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
-                              orientation='horizontal')
+    cb = mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
+                                   orientation='horizontal')
+    cb.ax.tick_params(colors=(cbTicClr))
   else:
-    mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
-                              orientation='vertical')
+    cb = mpl.colorbar.ColorbarBase(cax, cmap=_cmap, norm=_norm, ticks=_ticks,
+                                   orientation='vertical')
+    cb.ax.tick_params(colors=(cbTicClr))
 
   return True
 
 def Output(mid, outname, step, row, col, proc):
+  #import pdb; pdb.set_trace()
   global g_fig_list
   fname = outname
   p = fname.find('%S')
@@ -233,7 +245,11 @@ def Output(mid, outname, step, row, col, proc):
       fname = fname[0:p] + s + fname[p+3:]
     p = fname.find('%P')
   
-  fig = plt.figure(mid)
+  if ( mid in g_fig_list ):
+    fig = plt.figure(mid)
+  else:
+    return False
+  #fig = plt.figure(mid)
   fig.savefig(fname)
 
   g_fig_list.remove(mid)
