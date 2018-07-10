@@ -13,6 +13,7 @@ $(info PY_VER: $(PY_VER))
 $(info PI2D_DIR: $(PI2D_DIR))
 
 #G=-g
+G=-O2
 CXX = g++
 AR = ar
 RANLIB = ranlib
