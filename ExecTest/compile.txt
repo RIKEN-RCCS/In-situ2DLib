@@ -1,0 +1,2 @@
+g++ -o run run.cpp `python3.6-config --cflags --ldflags` -I`python3.6 -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'` -L.. -lPi2D
+
