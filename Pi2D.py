@@ -14,8 +14,6 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   _dpi = 100
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
-    #ax = fig.subplots()
-    #ax.patch.set_facecolor(bgClr)
   else:
     x = imgSz[0] / _dpi
     y = imgSz[1] / _dpi
@@ -91,8 +89,6 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   ax = None
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
-    #ax = fig.subplots()
-    #ax.patch.set_facecolor(bgClr)
   else:
     x = imgSz[0] / _dpi
     y = imgSz[1] / _dpi
@@ -209,7 +205,6 @@ def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic, cbTicClr):
   return True
 
 def Output(mid, outname, step, row, col, proc):
-  #import pdb; pdb.set_trace()
   global g_fig_list
   fname = outname
   p = fname.find('%S')
@@ -249,9 +244,11 @@ def Output(mid, outname, step, row, col, proc):
     fig = plt.figure(mid)
   else:
     return False
-  #fig = plt.figure(mid)
+
   fig.savefig(fname)
 
+  plt.close(fig)
   g_fig_list.remove(mid)
+
   return True
 

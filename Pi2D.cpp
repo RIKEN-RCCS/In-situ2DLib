@@ -233,8 +233,8 @@ bool Pi2D::SetAttrib(const string xarg)
     vector<string> vs = _split(vals);
     if ( vs.size() < 3 ) return false;
     r = atof(vs[0].c_str());
-    b = atof(vs[1].c_str());
-    g = atof(vs[2].c_str());
+    g = atof(vs[1].c_str());
+    b = atof(vs[2].c_str());
     m_bgColor[0] = (Real)r;
     m_bgColor[1] = (Real)g;
     m_bgColor[2] = (Real)b;
@@ -313,6 +313,19 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   long int dims2[1] = {2};
   long int dims4[1] = {4};
 
+  if ( lutname != "" ) {
+    bool exist = false;
+    map<std::string, LUT>::iterator itr = m_lutList.begin();
+    while( itr != m_lutList.end() ) {
+      if ( lutname == (*itr).first ) {
+        exist = true;
+        break;
+      }
+      ++itr;
+    }
+    if ( ! exist )
+      return false;
+  }
   LUT lut = m_lutList[lutname];
   if ( cbShow )
     m_registLut.insert(lutname);
@@ -532,6 +545,19 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   long int dims3[1] = {3};
   long int dims4[1] = {4};
 
+  if ( lutname != "" ) {
+    bool exist = false;
+    map<std::string, LUT>::iterator itr = m_lutList.begin();
+    while( itr != m_lutList.end() ) {
+      if ( lutname == (*itr).first ) {
+        exist = true;
+        break;
+      }
+      ++itr;
+    }
+    if ( ! exist )
+      return false;
+  }
   LUT lut = m_lutList[lutname];
   if ( cbShow )
     m_registLut.insert(lutname);
@@ -987,7 +1013,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pProc ) Py_DECREF(pProc);
 
   // clear set of LUT name;
-  //m_registLut.clear();
+  m_registLut.clear();
 
   return ret;
 }

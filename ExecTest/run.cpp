@@ -20,6 +20,8 @@ int main()
     printf("error: SetAttrib\n");
   if ( ! pi0->SetAttrib("vectorMag=0.5") )
     printf("error: SetAttrib\n");
+  if ( ! pi0->SetAttrib("vectorHeadRatio=5.0, 5.0") )
+    printf("error: SetAttrib\n");
 
   if ( res ) {
     printf("imageSize: %d,%d\n", pi0->m_imageSz[0], pi0->m_imageSz[1]);
@@ -38,6 +40,8 @@ int main()
   if ( ! pi1->SetAttrib("outfilePat=./out1_%S5.png") )
   //if ( ! pi1->SetAttrib("outfilePat=./out1_%S5%S3.png") )
     printf("error: SetAttrib\n");
+  if ( ! pi1->SetAttrib("bgColor=0.7, 0.4, 0.7") )
+    printf("error: SetAttrib\n");
 
   LUT* lut0 = new LUT();
   color_s clr0(0.0, 0.0, 1.0);
@@ -47,6 +51,7 @@ int main()
   lut0->cbSize[0] = 0.8;
   lut0->cbSize[1] = 0.1;
   lut0->cbHoriz = true;
+  lut0->cbTicColor[0] = 0.0;
   if ( ! pi0->SetLUT("LUT_B", lut0) )
     printf("error: SetLUT\n");
 
@@ -85,12 +90,14 @@ int main()
     }
   } 
 
+  // draw  contour
   if ( ! pi0->DrawS(ColorContour, z_arr, "LUT_B", 20, true) )
     printf("error: draw contour(f)\n");
 
   if ( ! pi1->SetCoord(c_arr, 2, vid) )
     printf("error: SetCoord\n");
 
+  //if ( ! pi1->DrawS(ContourLine, z_arr, "", 10, false) )
   if ( ! pi1->DrawS(ContourLine, z_arr) )
     printf("error: draw contour(f)\n");
 
@@ -104,18 +111,31 @@ int main()
   }
 
   //int vid[2] = {0, 1};
-  if ( ! pi0->DrawV(v_arr, 2, vid, "LUT_Y", 0, true) )
+  if ( ! pi0->SetAttrib("lineWidth=2.0") )
+    printf("error: SetAttrib\n");
+  if ( ! pi0->SetAttrib("vectorMag=0.5") )
+    printf("error: SetAttrib\n");
+  if ( ! pi0->DrawV(v_arr, 2, vid, "LUT_Y", -1, true) )
     printf("error: draw vector\n");
 
+  // output
   if ( ! pi0->Output(1, 22, 3, 4) )
     printf("error: save\n");
 
   if ( ! pi1->Output(8, 0, 0, 0) )
     printf("error: save\n");
 
+  // draw  contour
+  if ( ! pi0->DrawS(ColorContour, z_arr, "LUT_B", 20, true) )
+    printf("error: draw contour(f)\n");
+
+  // output
+  if ( ! pi0->Output(2, 22, 3, 4) )
+    printf("error: save\n");
+
   delete[] c_arr;
   delete[] z_arr;
-  delete lut0;
-  delete lut1;
+  //delete lut0;
+  //delete lut1;
   //delete pi0;
 }
