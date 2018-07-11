@@ -37,21 +37,24 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   _pad = -0.22 * (100.0 / _dpi)
   plt.tight_layout(pad=_pad)
 
-  if ( len(lut) == 0 ):
-    _cmap = None
-    _norm = None
-  else:
-    cmin = min(clrPos)
-    cmax = max(clrPos)
-    crange = cmax - cmin
-    cposList = [0.0]
-    if ( crange != 0.0 ):
-      cposList = [((v - cmin) / crange) for v in clrPos]
-    clrlist = []
-    for cpos, clr in zip(cposList, clrs):
-      clrlist.append((cpos, clr))
-    _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
-    _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
+  _cmap = None
+  _norm = None
+  _colors = None
+  if ( len(lut) != 0 ):
+    if ( len(clrPos) == 1 ):
+      _colors = clrs
+    else:
+      cmin = min(clrPos)
+      cmax = max(clrPos)
+      crange = cmax - cmin
+      cposList = [0.0]
+      if ( crange != 0.0 ):
+        cposList = [((v - cmin) / crange) for v in clrPos]
+      clrlist = []
+      for cpos, clr in zip(cposList, clrs):
+        clrlist.append((cpos, clr))
+      _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
+      _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)
 
   if nlevel <= 0:
     nL = 10
@@ -68,15 +71,15 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
     y1 = y0.flatten()
     y = y1.reshape(arrSz[0], arrSz[1])
     if ( vt == 0 ):
-      cont = plt.contourf(x, y, z, nL, cmap=_cmap, norm=_norm)
+      cont = plt.contourf(x, y, z, nL, cmap=_cmap, norm=_norm, colors=_colors)
     elif ( vt == 1 ):
-      cont = plt.contour(x, y, z, nL, cmap=_cmap, norm=_norm,
+      cont = plt.contour(x, y, z, nL, cmap=_cmap, norm=_norm, colors=_colors,
                          linewidths=lwidth)
   else:    # empty coord
     if ( vt == 0 ):
-      cont = plt.contourf(z, nL, cmap=_cmap, norm=_norm)
+      cont = plt.contourf(z, nL, cmap=_cmap, norm=_norm, colors=_colors)
     elif ( vt == 1 ):
-      cont = plt.contour(z, nL, cmap=_cmap, norm=_norm,
+      cont = plt.contour(z, nL, cmap=_cmap, norm=_norm, colors=_colors,
                          linewidths=lwidth)
 
   return True
@@ -170,19 +173,22 @@ def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic, cbTicClr):
   else:
     return False
 
-  if ( len(lut) == 0 ):
-    _cmap = None
-    _norm = None
-    _ticks = None
-  else:
+  _cmap = None
+  _norm = None
+  _ticks = None
+  if ( len(lut) != 0 ):
     cmin = min(clrPos)
     cmax = max(clrPos)
     crange = cmax - cmin
-    cposList = [0.0]
+    cposList = [cmin]
+    clrarr = clrs
     if ( crange != 0.0 ):
       cposList = [((v - cmin) / crange) for v in clrPos]
+    else:
+      cposList.append(cmin+1.0)
+      clrarr = [clrs[0], clrs[0]]
     clrlist = []
-    for cpos, clr in zip(cposList, clrs):
+    for cpos, clr in zip(cposList, clrarr):
       clrlist.append((cpos, clr))
     _cmap = LinearSegmentedColormap.from_list(lut, clrlist)
     _norm = mpl.colors.Normalize(vmin=cmin, vmax=cmax)

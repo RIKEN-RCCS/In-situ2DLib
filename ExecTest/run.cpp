@@ -38,7 +38,6 @@ int main()
   if ( ! pi1->SetAttrib("arraySize=40, 20") )
     printf("error: SetAttrib\n");
   if ( ! pi1->SetAttrib("outfilePat=./out1_%S5.png") )
-  //if ( ! pi1->SetAttrib("outfilePat=./out1_%S5%S3.png") )
     printf("error: SetAttrib\n");
   if ( ! pi1->SetAttrib("bgColor=0.7, 0.4, 0.7") )
     printf("error: SetAttrib\n");
@@ -69,6 +68,12 @@ int main()
   if ( ! pi0->SetLUT("LUT_Y", lut1) )
     printf("error: SetLUT\n");
 
+  LUT* lut2 = new LUT();
+  color_s clr3(0.0, 1.0, 1.0);
+  lut2->colorList[0.0] = clr3;
+  if ( ! pi1->SetLUT("LUT_S", lut2) )
+    printf("error: SetLUT\n");
+
   int i, j;
   int n;
   Real* c_arr = new Real[40 * 20 * 2];
@@ -97,9 +102,10 @@ int main()
   if ( ! pi1->SetCoord(c_arr, 2, vid) )
     printf("error: SetCoord\n");
 
-  //if ( ! pi1->DrawS(ContourLine, z_arr, "", 10, false) )
-  if ( ! pi1->DrawS(ContourLine, z_arr) )
+  if ( ! pi1->DrawS(ContourLine, z_arr, "", 10, false) )
     printf("error: draw contour(f)\n");
+  //if ( ! pi1->DrawS(ContourLine, z_arr, "LUT_S") )
+  //  printf("error: draw contour(f)\n");
 
   Real* v_arr = new Real[40 * 20 * 2];
   for (i = 0; i < 20; i++){
@@ -135,7 +141,4 @@ int main()
 
   delete[] c_arr;
   delete[] z_arr;
-  //delete lut0;
-  //delete lut1;
-  //delete pi0;
 }
