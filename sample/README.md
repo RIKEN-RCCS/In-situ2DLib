@@ -4,7 +4,7 @@
 ## data
 サンプルデータが置かれています。データ、三次元キャビテーフローの圧力(p)と流速(v)のデータです(ただし、側面壁はFree-Slipなので、Z軸方向のどの断面でも流れ場は同じです)。
 
-![Velocity](cavity_velo.png)
+![Velocity](imgs/cavity_velo.png)
 
 - cavP.d : 圧力(p), 32x32x32, 単精度
 - cavV.d : 流速(v), 32x32x32x3, 単精度
@@ -35,7 +35,7 @@ FORTRAN90でのPi2Dサンプルプログラム(Test.f90)が置かれています
 - 実行: ./Test
 - 結果: outimage_000000.png
 
-![Result](cavity_res.png)
+![Result](imgs/cavity_res.png)
 
 全てのプログラムで、Z=0のXY断面の圧力と流速ベクトルをプロットしています。
 流速ベクトルは(u, v)成分を倍率(vectorMag)5倍で描画しています。
