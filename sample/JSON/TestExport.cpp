@@ -1,28 +1,76 @@
 #include "Pi2D.h"
 
 int main(int argc, char** argv) {
-  Pi2D p;
-  p.m_imageSz[0] = p.m_imageSz[1] = 1000;
-  p.m_arraySz[0] = p.m_arraySz[1] = 512;
-  p.m_viewPort[2] = p.m_viewPort[3] = 500.0;
-  p.m_outputPtn = "Output_%R3_%C3_%S6.png";
-  p.m_lineWidth = 1.5;
-  p.m_vectorMag = 0.1;
-  p.m_vectorHeadRatio[0] = p.m_vectorHeadRatio[1] = 2.5;
+  Pi2D pi2d;
+  char attrBuff[128];
 
+  // set attributes
+  sprintf(attrBuff, "imageSize=%d,%d", 1024, 512);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set imageSize failed\n");
+    exit(1);
+  }
+
+  sprintf(attrBuff, "arraySize=%d,%d", 256, 256);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set arraySize failed\n");
+    exit(1);
+  }
+
+  sprintf(attrBuff, "viewport=%g,%g,%g,%g", 0.0, 0.0, 500.0, 500.0);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set viewport failed\n");
+    exit(1);
+  }
+  
+  sprintf(attrBuff, "outfilePat=Output_%%R3_%%C3_%%S6.png");
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set outfilePat failed\n");
+    exit(1);
+  }
+
+  sprintf(attrBuff, "lineWidth=%g", 1.5);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set lineWidth failed\n");
+    exit(1);
+  }
+  
+  sprintf(attrBuff, "vectorMag=%g", 0.1);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set vectorMag failed\n");
+    exit(1);
+  }
+
+  sprintf(attrBuff, "vectorHeadRatio=%g,%g", 2.5, 2.5);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set vectorHeadRatio failed\n");
+    exit(1);
+  }
+
+  sprintf(attrBuff, "bgColor=%g,%g,%g", 0.2, 0.2, 0.2);
+  if ( ! pi2d.SetAttrib(attrBuff) ) {
+    fprintf(stderr, "set bgColor failed\n");
+    exit(1);
+  }
+
+  // set LUTs
   LUT lut;
   lut.colorList[0.0] = color_s(0.01, 0.01, 0.01);
   lut.colorList[100.0] = color_s(1.0, 1.0, 1.0);
   lut.cbPos[0] = 0.1; lut.cbPos[1] = 0.1;
-  p.m_lutList["gray"] = lut;
+  pi2d.m_lutList["gray"] = lut;
 
   lut.colorList[0.0] = color_s(0.0, 0.0, 1.0);
   lut.colorList[50.0] = color_s(0.0, 1.0, 0.0);
   lut.colorList[100.0] = color_s(1.0, 0.0, 0.0);
   lut.cbHoriz = true;
-  p.m_lutList["rgb"] = lut;
+  pi2d.m_lutList["rgb"] = lut;
 
-  p.ExportAttrib("X.json");
+  // export attributes to JSON file
+  if ( ! pi2d.ExportAttrib("X.json") ) {
+    fprintf(stderr, "export attributes failed\n");
+    exit(1);
+  }
 
-  return 0;
+  exit(0);
 }
