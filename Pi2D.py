@@ -10,6 +10,9 @@ g_fig_list = set()
 
 def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
           vt, z, lut, nlevel, bgClr, cbShow, lwidth, clrPos, clrs):
+  """
+  等高線図の描画
+  """
   global g_fig_list
   _dpi = 100
   if ( mid in g_fig_list ):
@@ -87,6 +90,9 @@ def DrawS(mid, imgSz, vp, arrSz, coord, veclen, vecid,
 def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
           vals, vlen, vid, lut, bgClr, cbShow, lwidth, vmag, vratio,
           clist, clrPos, clrs):
+  """
+  ベクトル図の描画
+  """
   global g_fig_list
   _dpi = 100.0
   ax = None
@@ -167,6 +173,9 @@ def DrawV(mid, imgSz, vp, arrSz, coord, veclen, vecid,
   return True
 
 def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic, cbTicClr):
+  """
+  カラーバーの描画
+  """
   global g_fig_list
   if ( mid in g_fig_list ):
     fig = plt.figure(mid)
@@ -211,6 +220,9 @@ def DrawCB(mid, lut, clrPos, clrs, cbSz, cbPos, cbHrz, cbTic, cbTicClr):
   return True
 
 def Output(mid, outname, step, row, col, proc):
+  """
+  画像の出力
+  """
   global g_fig_list
   fname = outname
   p = fname.find('%S')

@@ -67,6 +67,13 @@ Pi2D::Pi2D()
   m_bgColor[2] = 0.0;
 
   m_registLut.clear();
+
+  m_veclen = 2;
+  m_vecid[0] = 0;
+  m_vecid[1] = 1;
+  m_veclen_v = 2;
+  m_vecid_v[0] = 0;
+  m_vecid_v[1] = 1;
  
   pModule = NULL;
   pFuncDrawS = NULL;
