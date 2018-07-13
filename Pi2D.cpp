@@ -504,15 +504,14 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
                    pCtype, pZarr, pLut, pNlevel, pBGClr, pShow,
                    pWidth, pClrPos, pClr, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+    if ( ! pRet )
       ret = false;
-    }
     if ( pRet == Py_False )
       ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
-//  PyDataMem_FREE(zarr);
   if ( pId ) Py_DECREF(pId);
   if ( pImgSz ) Py_DECREF(pImgSz);
   if ( pVP ) Py_DECREF(pVP);
@@ -811,12 +810,12 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
                    pVal, pVlenV, pVidV, pLut, pBGClr, pShow, pWidth,
                    pMag, pRatio, pClrList, pClrPos, pClr, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+    if ( ! pRet )
       ret = false;
-    }
     if ( pRet == Py_False )
       ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
   // decref python object
@@ -950,12 +949,12 @@ bool Pi2D::Output(const int step, const int row, const int col,
       pRet = PyObject_CallFunctionObjArgs(pFuncDrawCB,
                      pId, pLut, pClrPos, pClr, pCbSz, pCbPos,
                      pCbHrz, pCbTic, pCbTicClr, NULL);
-      if ( ! pRet || PyErr_Occurred() ) {
-        if ( s_debugprint ) PyErr_Print();
+      if ( ! pRet )
         ret = false;
-      }
       if ( pRet == Py_False )
         ret = false;
+      if ( PyErr_Occurred() && s_debugprint )
+	PyErr_Print();
     }
 
     // decref python object
@@ -1017,14 +1016,14 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   // call python function
   if ( ret ) {
-    pRet = PyObject_CallFunctionObjArgs(pFuncOut,
-                         pId, pOutName, pStep, pRow, pCol, pProc, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+    pRet = PyObject_CallFunctionObjArgs(pFuncOut, pId, pOutName,
+					pStep, pRow, pCol, pProc, NULL);
+    if ( ! pRet )
       ret = false;
-    }
     if ( pRet == Py_False )
       ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
   // decref PyObject
