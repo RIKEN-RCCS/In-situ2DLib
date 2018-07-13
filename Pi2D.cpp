@@ -508,6 +508,8 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
+    if ( pRet == Py_False )
+      ret = false;
   }
 
 //  PyDataMem_FREE(zarr);
@@ -527,6 +529,7 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   if ( pWidth ) Py_DECREF(pWidth);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
+  if ( pRet ) Py_DECREF(pRet);
 
   return ret;
 }
@@ -812,6 +815,8 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
+    if ( pRet == Py_False )
+      ret = false;
   }
 
   // decref python object
@@ -834,6 +839,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( pClrList ) Py_DECREF(pClrList);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
+  if ( pRet ) Py_DECREF(pRet);
 
   return ret;
 }
@@ -841,7 +847,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 bool Pi2D::Output(const int step, const int row, const int col,
                 const int proc)
 {
-  PyObject* pOutName;
+  PyObject* pRet;
 
   bool ret = true;
 
@@ -940,7 +946,6 @@ bool Pi2D::Output(const int step, const int row, const int col,
     }
 
     // call python function
-    PyObject* pRet;
     if ( ret ) {
       pRet = PyObject_CallFunctionObjArgs(pFuncDrawCB,
                      pId, pLut, pClrPos, pClr, pCbSz, pCbPos,
@@ -949,6 +954,8 @@ bool Pi2D::Output(const int step, const int row, const int col,
         if ( s_debugprint ) PyErr_Print();
         ret = false;
       }
+      if ( pRet == Py_False )
+        ret = false;
     }
 
     // decref python object
@@ -960,9 +967,16 @@ bool Pi2D::Output(const int step, const int row, const int col,
     if ( pCbHrz ) Py_DECREF(pCbHrz);
     if ( pCbTic ) Py_DECREF(pCbTic);
     if ( pCbTicClr ) Py_DECREF(pCbTicClr);
+    if ( pRet ) Py_DECREF(pRet);
+
+    if ( ! ret ) {
+      if ( pId ) Py_DECREF(pId);
+      return false;
+    }
   }
 
   // set outputPtn
+  PyObject* pOutName;
 #if PY_MAJOR_VERSION >= 3
   pOutName = PyUnicode_FromString(m_outputPtn.c_str());
 #else
@@ -1003,12 +1017,14 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   // call python function
   if ( ret ) {
-    PyObject* pRet = PyObject_CallFunctionObjArgs(pFuncOut,
+    pRet = PyObject_CallFunctionObjArgs(pFuncOut,
                          pId, pOutName, pStep, pRow, pCol, pProc, NULL);
     if ( ! pRet || PyErr_Occurred() ) {
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
+    if ( pRet == Py_False )
+      ret = false;
   }
 
   // decref PyObject
@@ -1018,6 +1034,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pRow ) Py_DECREF(pRow);
   if ( pCol ) Py_DECREF(pCol);
   if ( pProc ) Py_DECREF(pProc);
+  if ( pRet ) Py_DECREF(pRet);
 
   // clear set of LUT name;
   m_registLut.clear();
