@@ -2,6 +2,9 @@
 #include "numpy/arrayobject.h"
 #include <complex>
 #include <cstdlib>
+#include <vector>
+#include <sstream>
+#include <istream>
 
 #if PY_MAJOR_VERSION >= 3
 int init_numpy() {import_array();}
@@ -21,6 +24,29 @@ size_t Pi2D::s_id = 0;
 bool Pi2D::s_debugprint = true;
 
 
+static string _trim(const string& str, const char* trimCharList=" \t\r\n")
+{
+  string result;
+  string::size_type left = str.find_first_not_of(trimCharList);
+  if ( left != string::npos ) {
+    string::size_type right = str.find_last_not_of(trimCharList);
+    result = str.substr(left, right - left + 1);
+  }
+  return result;
+}
+
+vector<string> _split(const string& str, const char delimChar=',')
+{
+  vector<string> v;
+  stringstream ss(str);
+  string buf;
+  while ( getline(ss, buf, delimChar) ) {
+    v.push_back(buf);
+  }
+  return v;
+}
+
+
 Pi2D::Pi2D()
 {
   m_imageSz[0] = 600;
@@ -36,8 +62,18 @@ Pi2D::Pi2D()
   m_vectorMag = 1.0;
   m_vectorHeadRatio[0] = -1.0;
   m_vectorHeadRatio[1] = -1.0;
+  m_bgColor[0] = 0.0;
+  m_bgColor[1] = 0.0;
+  m_bgColor[2] = 0.0;
 
   m_registLut.clear();
+
+  m_veclen = 2;
+  m_vecid[0] = 0;
+  m_vecid[1] = 1;
+  m_veclen_v = 2;
+  m_vecid_v[0] = 0;
+  m_vecid_v[1] = 1;
  
   pModule = NULL;
   pFuncDrawS = NULL;
@@ -127,8 +163,10 @@ Pi2D::~Pi2D()
     Py_DECREF(pModule);
 }
 
-bool Pi2D::SetAttrib(const string arg)
+bool Pi2D::SetAttrib(const string xarg)
 {
+  string arg = _trim(xarg);
+  
   // check empty argument
   if ( arg.empty() ) {
     return false;
@@ -144,23 +182,30 @@ bool Pi2D::SetAttrib(const string arg)
 
   if ( attr == "imageSize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    w = atoi(vs[0].c_str());
+    h = atoi(vs[1].c_str());
     if ( w < 0 || h < 0 ) return false;
     m_imageSz[0] = w;
     m_imageSz[1] = h;
   } else if ( attr == "arraySize" ) {
     int w, h;
-    int n = sscanf(vals.c_str(), "%d, %d", &w, &h);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    w = atoi(vs[0].c_str());
+    h = atoi(vs[1].c_str());
     if ( w < 0 || h < 0 ) return false;
     m_arraySz[0] = w;
     m_arraySz[1] = h;
   } else if ( attr == "viewport" ) {
-    //Real x0, x1, y0, y1;
     double x0, x1, y0, y1;
-    int n = sscanf(vals.c_str(), "%lf, %lf, %lf, %lf", &x0, &x1, &y0, &y1);
-    if ( n != 4 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 4 ) return false;
+    x0 = atof(vs[0].c_str());
+    x1 = atof(vs[1].c_str());
+    y0 = atof(vs[2].c_str());
+    y1 = atof(vs[3].c_str());
     m_viewPort[0] = (Real)x0;
     m_viewPort[1] = (Real)x1;
     m_viewPort[2] = (Real)y0;
@@ -169,28 +214,37 @@ bool Pi2D::SetAttrib(const string arg)
     if ( vals.empty() ) return false;
     m_outputPtn = vals;
   } else if ( attr == "lineWidth" ) {
-    //Real w;
     double w;
     int n = sscanf(vals.c_str(), "%lf", &w);
     if ( n != 1 ) return false;
     if ( w < 0.0 ) return false;
     m_lineWidth = (Real)w;
   } else if ( attr == "vectorMag" ) {
-    //Real v;
     double v;
     int n = sscanf(vals.c_str(), "%lf", &v);
     if ( n != 1 ) return false;
     if ( v < 0.0 ) return false;
     m_vectorMag = (Real)v;
   } else if ( attr == "vectorHeadRatio" ) {
-    //Real r0, r1;
     double r0, r1;
-    int n = sscanf(vals.c_str(), "%lf, %lf", &r0, &r1);
-    if ( n != 2 ) return false;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 2 ) return false;
+    r0 = atof(vs[0].c_str());
+    r1 = atof(vs[1].c_str());
     if ( r0 != -1 && r0 < 0.0 ) return false;
     if ( r1 != -1 && r1 < 0.0 ) return false;
     m_vectorHeadRatio[0] = (Real)r0;
     m_vectorHeadRatio[1] = (Real)r1;
+  } else if ( attr == "bgColor" ) {
+    double r, g, b;
+    vector<string> vs = _split(vals);
+    if ( vs.size() < 3 ) return false;
+    r = atof(vs[0].c_str());
+    g = atof(vs[1].c_str());
+    b = atof(vs[2].c_str());
+    m_bgColor[0] = (Real)r;
+    m_bgColor[1] = (Real)g;
+    m_bgColor[2] = (Real)b;
   } else {
     return false;
   }
@@ -266,6 +320,19 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   long int dims2[1] = {2};
   long int dims4[1] = {4};
 
+  if ( lutname != "" ) {
+    bool exist = false;
+    map<std::string, LUT>::iterator itr = m_lutList.begin();
+    while( itr != m_lutList.end() ) {
+      if ( lutname == (*itr).first ) {
+        exist = true;
+        break;
+      }
+      ++itr;
+    }
+    if ( ! exist )
+      return false;
+  }
   LUT lut = m_lutList[lutname];
   if ( cbShow )
     m_registLut.insert(lutname);
@@ -377,6 +444,16 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
     ret = false;
   }
 
+  // set bgColor
+  long int dims3[1] = {3};
+  PyObject* pBGClr =
+      PyArray_SimpleNewFromData(1, dims3, NPY_REAL,
+                                reinterpret_cast<void*>(m_bgColor));
+  if ( ! pBGClr || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
   // set cbShow
   PyObject* pShow;
   if ( cbShow )
@@ -425,15 +502,16 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawS,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
-                   pCtype, pZarr, pLut, pNlevel, pShow, pWidth,
-                   pClrPos, pClr, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+                   pCtype, pZarr, pLut, pNlevel, pBGClr, pShow,
+                   pWidth, pClrPos, pClr, NULL);
+    if ( ! pRet )
       ret = false;
-    }
+    if ( pRet == Py_False )
+      ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
-//  PyDataMem_FREE(zarr);
   if ( pId ) Py_DECREF(pId);
   if ( pImgSz ) Py_DECREF(pImgSz);
   if ( pVP ) Py_DECREF(pVP);
@@ -445,10 +523,12 @@ bool Pi2D::DrawS(const CVType vt, const Real* data,
   if ( pZarr ) Py_DECREF(pZarr);
   if ( pLut ) Py_DECREF(pLut);
   if ( pNlevel ) Py_DECREF(pNlevel);
-  if ( pWidth ) Py_DECREF(pWidth);
+  if ( pBGClr ) Py_DECREF(pBGClr);
   if ( pShow ) Py_DECREF(pShow);
+  if ( pWidth ) Py_DECREF(pWidth);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
+  if ( pRet ) Py_DECREF(pRet);
 
   return ret;
 }
@@ -471,8 +551,22 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   bool ret = true;
 
   long int dims2[1] = {2};
+  long int dims3[1] = {3};
   long int dims4[1] = {4};
 
+  if ( lutname != "" ) {
+    bool exist = false;
+    map<std::string, LUT>::iterator itr = m_lutList.begin();
+    while( itr != m_lutList.end() ) {
+      if ( lutname == (*itr).first ) {
+        exist = true;
+        break;
+      }
+      ++itr;
+    }
+    if ( ! exist )
+      return false;
+  }
   LUT lut = m_lutList[lutname];
   if ( cbShow )
     m_registLut.insert(lutname);
@@ -563,6 +657,15 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   pLut = PyString_FromString(lutname.c_str());
 #endif
   if ( ! pLut || PyErr_Occurred() ) {
+    if ( s_debugprint ) PyErr_Print();
+    ret = false;
+  }
+
+  // set bgColor
+  PyObject* pBGClr =
+      PyArray_SimpleNewFromData(1, dims3, NPY_REAL,
+                                reinterpret_cast<void*>(m_bgColor));
+  if ( ! pBGClr || PyErr_Occurred() ) {
     if ( s_debugprint ) PyErr_Print();
     ret = false;
   }
@@ -705,12 +808,14 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( ret ) {
     pRet = PyObject_CallFunctionObjArgs(pFuncDrawV,
                    pId, pImgSz, pVP, pArrSz, pCoord, pVlen, pVid,
-                   pVal, pVlenV, pVidV, pLut, pShow, pWidth,
+                   pVal, pVlenV, pVidV, pLut, pBGClr, pShow, pWidth,
                    pMag, pRatio, pClrList, pClrPos, pClr, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+    if ( ! pRet )
       ret = false;
-    }
+    if ( pRet == Py_False )
+      ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
   // decref python object
@@ -725,12 +830,15 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
   if ( pVlenV ) Py_DECREF(pVlenV);
   if ( pVidV ) Py_DECREF(pVidV);
   if ( pLut ) Py_DECREF(pLut);
+  if ( pBGClr ) Py_DECREF(pBGClr);
+  if ( pShow ) Py_DECREF(pShow);
   if ( pWidth ) Py_DECREF(pWidth);
   if ( pMag ) Py_DECREF(pMag);
   if ( pRatio ) Py_DECREF(pRatio);
   if ( pClrList ) Py_DECREF(pClrList);
   if ( pClrPos ) Py_DECREF(pClrPos);
   if ( pClr ) Py_DECREF(pClr);
+  if ( pRet ) Py_DECREF(pRet);
 
   return ret;
 }
@@ -738,7 +846,7 @@ bool Pi2D::DrawV(const Real* data, const int veclen,
 bool Pi2D::Output(const int step, const int row, const int col,
                 const int proc)
 {
-  PyObject* pOutName;
+  PyObject* pRet;
 
   bool ret = true;
 
@@ -797,6 +905,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
     }
 
     long int dims2[1] = {2};
+    long int dims3[1] = {3};
 
     // set cbSize
     PyObject* pCbSz =
@@ -826,17 +935,26 @@ bool Pi2D::Output(const int step, const int row, const int col,
       if ( s_debugprint ) PyErr_Print();
       ret = false;
     }
+    // set cbTicColor
+    PyObject* pCbTicClr =
+        PyArray_SimpleNewFromData(1, dims3, NPY_REAL,
+                                  reinterpret_cast<void*>(lut.cbTicColor));
+    if ( ! pCbTicClr || PyErr_Occurred() ) {
+      if ( s_debugprint ) PyErr_Print();
+      ret = false;
+    }
 
     // call python function
-    PyObject* pRet;
     if ( ret ) {
       pRet = PyObject_CallFunctionObjArgs(pFuncDrawCB,
                      pId, pLut, pClrPos, pClr, pCbSz, pCbPos,
-                     pCbHrz, pCbTic, NULL);
-      if ( ! pRet || PyErr_Occurred() ) {
-        if ( s_debugprint ) PyErr_Print();
+                     pCbHrz, pCbTic, pCbTicClr, NULL);
+      if ( ! pRet )
         ret = false;
-      }
+      if ( pRet == Py_False )
+        ret = false;
+      if ( PyErr_Occurred() && s_debugprint )
+	PyErr_Print();
     }
 
     // decref python object
@@ -847,9 +965,17 @@ bool Pi2D::Output(const int step, const int row, const int col,
     if ( pCbPos ) Py_DECREF(pCbPos);
     if ( pCbHrz ) Py_DECREF(pCbHrz);
     if ( pCbTic ) Py_DECREF(pCbTic);
+    if ( pCbTicClr ) Py_DECREF(pCbTicClr);
+    if ( pRet ) Py_DECREF(pRet);
+
+    if ( ! ret ) {
+      if ( pId ) Py_DECREF(pId);
+      return false;
+    }
   }
 
   // set outputPtn
+  PyObject* pOutName;
 #if PY_MAJOR_VERSION >= 3
   pOutName = PyUnicode_FromString(m_outputPtn.c_str());
 #else
@@ -890,12 +1016,14 @@ bool Pi2D::Output(const int step, const int row, const int col,
 
   // call python function
   if ( ret ) {
-    PyObject* pRet = PyObject_CallFunctionObjArgs(pFuncOut,
-                         pId, pOutName, pStep, pRow, pCol, pProc, NULL);
-    if ( ! pRet || PyErr_Occurred() ) {
-      if ( s_debugprint ) PyErr_Print();
+    pRet = PyObject_CallFunctionObjArgs(pFuncOut, pId, pOutName,
+					pStep, pRow, pCol, pProc, NULL);
+    if ( ! pRet )
       ret = false;
-    }
+    if ( pRet == Py_False )
+      ret = false;
+    if ( PyErr_Occurred() && s_debugprint )
+      PyErr_Print();
   }
 
   // decref PyObject
@@ -905,6 +1033,7 @@ bool Pi2D::Output(const int step, const int row, const int col,
   if ( pRow ) Py_DECREF(pRow);
   if ( pCol ) Py_DECREF(pCol);
   if ( pProc ) Py_DECREF(pProc);
+  if ( pRet ) Py_DECREF(pRet);
 
   // clear set of LUT name;
   m_registLut.clear();

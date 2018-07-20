@@ -29,6 +29,8 @@ public:
   Real cbPos[2];
   bool cbHoriz;
   size_t cbNumTic;
+  //color_s cbTicColor;
+  Real cbTicColor[3];
 };
 
 # endif // _LUT_H_

@@ -172,9 +172,12 @@ extern "C" {
   PI2D_RET_TYPE pi2d_draws(int vt, Real* data, char* lutname, int lutnamelen,
 			   int nlevels, int cbshow) {
     if ( ! s_pi2dexif ) return PI2D_FAILED;
-    if ( ! lutname || lutnamelen < 1 ) return PI2D_FAILED;
-    std::string strLutName(lutnamelen, '\0');
-    for ( int i = 0; i < lutnamelen; i++ ) strLutName[i] = lutname[i];
+    if ( lutnamelen > 0 && ! lutname ) return PI2D_FAILED;
+    std::string strLutName;
+    if ( lutnamelen > 0 ) {
+      strLutName = std::string(lutnamelen, '\0');
+      for ( int i = 0; i < lutnamelen; i++ ) strLutName[i] = lutname[i];
+    }
     CVType evt;
     if ( vt == 0 ) evt = ColorContour;
     else if ( vt == 1 ) evt = ContourLine;
@@ -195,9 +198,12 @@ extern "C" {
 			   char* lutname, int lutnamelen,
 			   int colidx, int cbshow) {
     if ( ! s_pi2dexif ) return PI2D_FAILED;
-    if ( ! lutname || lutnamelen < 1 ) return PI2D_FAILED;
-    std::string strLutName(lutnamelen, '\0');
-    for ( int i = 0; i < lutnamelen; i++ ) strLutName[i] = lutname[i];
+    if ( lutnamelen > 0 && ! lutname ) return PI2D_FAILED;
+    std::string strLutName;
+    if ( lutnamelen > 0 ) {
+      strLutName = std::string(lutnamelen, '\0');
+      for ( int i = 0; i < lutnamelen; i++ ) strLutName[i] = lutname[i];
+    }
     if ( ! s_pi2dexif->DrawV(data, veclen, vecidx, strLutName,
 			     colidx, (cbshow==1)) )
       return PI2D_FAILED;

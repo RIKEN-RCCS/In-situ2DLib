@@ -41,6 +41,7 @@ public:
   Real m_lineWidth;
   Real m_vectorMag;
   Real m_vectorHeadRatio[2];
+  Real m_bgColor[3];
   size_t m_id;
 
 private:

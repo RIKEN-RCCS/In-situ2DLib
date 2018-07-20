@@ -13,6 +13,7 @@ $(info PY_VER: $(PY_VER))
 $(info PI2D_DIR: $(PI2D_DIR))
 
 #G=-g
+G=-O2
 CXX = g++
 AR = ar
 RANLIB = ranlib
@@ -21,7 +22,7 @@ INSTALL = install
 RFLG=
 LFLG=
 
-CXXFLAGS = $(G) $(RFLG) `python$(PY_VER)-config --cflags | sed -e 's/-arch i386//'` \
+CXXFLAGS = $(G) $(RFLG) `python$(PY_VER)-config --includes` \
 	-I`python$(PY_VER) -c 'import numpy, sys; sys.stdout.write(numpy.get_include())'`
 LDFLAGS = `python$(PY_VER)-config --ldflags`
 ARFLGS = crsv
